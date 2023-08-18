@@ -9,13 +9,13 @@ namespace Sharpfile
     internal interface File_System_Operations
     {
         public Task<bool> List_Files();
-        public Task<bool> Create_Directory();
-        public Task<bool> Delete_Directory();
+        public Task<bool> Create_Directory(string directory_path);
+        public Task<bool> Delete_Directory(string directory_path);
         public Task<bool> Navigate_To_Next_Directory();
         public Task<bool> Navigate_To_Previos_Directory();
-        public Task<bool> Search_File();
-        public Task<bool> Create_File();
-        public Task<bool> Delete_File();
-        public Task<bool> Open_File();
+        public Task<bool> Search_File(string file_name);
+        public Task<bool> Create_File(string file_path);
+        public Task<bool> Delete_File(string file_path);
+        public Task<bool> Open_File(string file_path);
     }
 }

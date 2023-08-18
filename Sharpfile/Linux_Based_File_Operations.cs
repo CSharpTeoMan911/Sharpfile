@@ -8,47 +8,47 @@ namespace Sharpfile
 {
     internal class Linux_Based_File_Operations : File_System_Operations
     {
-        Task<bool> File_System_Operations.Create_Directory()
+        public async Task<bool> Create_Directory(string directory_path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Create_File()
+        public async Task<bool> Create_File(string file_path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Delete_Directory()
+        public async Task<bool> Delete_Directory(string directory_path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Delete_File()
+        public async Task<bool> Delete_File(string file_path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.List_Files()
+        public async Task<bool> List_Files()
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Navigate_To_Next_Directory()
+        public async Task<bool> Navigate_To_Next_Directory()
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Navigate_To_Previos_Directory()
+        public async Task<bool> Navigate_To_Previos_Directory()
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Open_File()
+        public async Task<bool> Open_File(string file_path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Search_File()
+        public async Task<bool> Search_File(string file_name)
         {
             throw new NotImplementedException();
         }
