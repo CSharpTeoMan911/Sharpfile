@@ -19,10 +19,13 @@ namespace Sharpfile
         }
 
 
-        public static void Print_Current_Directory_Contents(string content, ConsoleColor color)
+        public static void Print_Current_Directory_Contents()
         {
-            Console.ForegroundColor = color;
-            Console.WriteLine(content);
+            foreach(Tuple<string, string, string, ConsoleColor> tuple in Program.current_directory)
+            {
+                Console.ForegroundColor = tuple.Item4;
+                Console.WriteLine(tuple.Item2);
+            }
             Console.ForegroundColor = Program.Default_Console_Color;
         }
     }

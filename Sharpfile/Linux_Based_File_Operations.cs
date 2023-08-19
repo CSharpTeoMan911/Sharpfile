@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Sharpfile
 {
-    internal class Linux_Based_File_Operations : File_System_Operations
+    internal class Linux_Based_File_Operations : File_Sub_Operations, File_System_Operations
     {
         public async Task<bool> Create_Directory(string directory_path)
         {
@@ -30,56 +31,35 @@ namespace Sharpfile
 
         public async Task<bool> List_Files()
         {
+            Program.current_directory.Clear();
+
             IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Program.Current_Directory);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
 
             while (contents_enumerator.MoveNext() == true)
             {
+                Tuple<string, string, string, ConsoleColor> current_file = null;
+
                 ConsoleColor current_item_color = Program.Default_Console_Color;
-                string file_name = System.IO.Path.GetFileName(contents_enumerator.Current);
 
-                // SET PROCESS 
-                System.Diagnostics.ProcessStartInfo shell_process_start_info = new System.Diagnostics.ProcessStartInfo("/bin/bash", "-c \"ls -all " + file_name + "\"");
-                shell_process_start_info.RedirectStandardError = true;
-                shell_process_start_info.RedirectStandardInput = true;
-                shell_process_start_info.RedirectStandardOutput = true;
+                string file_name = await Sub_Operations_Controller(Sub_Operations.Get_File_Name, contents_enumerator.Current);
 
-                System.Diagnostics.Process shell_process = new System.Diagnostics.Process();
-                shell_process.StartInfo = shell_process_start_info;
-                shell_process.Start();
+                string extension_type = await Sub_Operations_Controller(Sub_Operations.Get_File_Extension, contents_enumerator.Current);
+
+                string file_permissions = await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current);
 
 
-
-                int space_index = 0;
-                StringBuilder result = new StringBuilder(await shell_process.StandardOutput.ReadLineAsync());
-
-                for (int i = 0; i < result.Length; i++)
-                {
-                    if (result[i] == ' ')
-                    {
-                        space_index = i;
-                        break;
-                    }
-                }
-
-
-                result.Remove(space_index, (result.Length - space_index));
-                string file_permissions = result.ToString();
-
-                string extension_type = System.IO.Path.GetExtension(contents_enumerator.Current);
-
-                switch (extension_type == String.Empty)
+                switch (System.IO.Directory.Exists(contents_enumerator.Current))
                 {
                     case true:
+                        current_item_color = ConsoleColor.Blue;
+                        break;
 
-                        switch (file_permissions.Contains('d'))
+                    case false:
+                        switch (extension_type == String.Empty)
                         {
                             case true:
-                                current_item_color = ConsoleColor.Blue;
-                                break;
-
-                            case false:
                                 switch (file_permissions.Contains('x'))
                                 {
                                     case true:
@@ -91,15 +71,16 @@ namespace Sharpfile
                                         break;
                                 }
                                 break;
-                        }
-                        break;
 
-                    case false:
-                        current_item_color = ConsoleColor.Green;
+                            case false:
+                                current_item_color = ConsoleColor.Green;
+                                break;
+                        }
                         break;
                 }
 
-                GUI_Contents.Print_Current_Directory_Contents(file_name, current_item_color);
+                current_file = new Tuple<string, string, string, ConsoleColor>(file_permissions, file_name, extension_type, current_item_color);
+                Program.current_directory.Add(current_file);
             }
 
             if (contents_enumerator != null)

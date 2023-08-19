@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Sharpfile.File_Sub_Operations;
 
 namespace Sharpfile
 {
-    internal class Windows_Based_File_Operations: File_System_Operations
+    internal class Windows_Based_File_Operations:File_Sub_Operations, File_System_Operations
     {
         public async Task<bool> Create_Directory(string directory_path)
         {
@@ -30,34 +31,47 @@ namespace Sharpfile
 
         public async Task<bool> List_Files()
         {
-            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries("C:\\Users\\Teodor Mihail\\source\\repos\\Sharpfile\\Sharpfile\\bin\\Release\\net6.0\\publish");
+            Program.current_directory.Clear();
+
+            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Program.Current_Directory);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
 
-            while(contents_enumerator.MoveNext() == true)
+            while (contents_enumerator.MoveNext() == true)
             {
-                ConsoleColor current_item_color = ConsoleColor.White;
-                string extension_type = System.IO.Path.GetExtension(contents_enumerator.Current);
+                Tuple<string, string, string, ConsoleColor> current_file = null;
 
-                switch(extension_type == String.Empty)
+                ConsoleColor current_item_color = Program.Default_Console_Color;
+
+                string file_name = await Sub_Operations_Controller(Sub_Operations.Get_File_Name, contents_enumerator.Current);
+
+                string extension_type = await Sub_Operations_Controller(Sub_Operations.Get_File_Extension, contents_enumerator.Current);
+
+                string file_permissions = await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current);
+
+
+                switch (System.IO.Directory.Exists(contents_enumerator.Current))
                 {
                     case true:
                         current_item_color = ConsoleColor.Blue;
                         break;
 
                     case false:
-                        if(extension_type == ".exe")
+                        switch (extension_type == ".exe")
                         {
-                            current_item_color = ConsoleColor.Yellow;
-                        }
-                        else
-                        {
-                            current_item_color = ConsoleColor.Green;
+                            case true:
+                                current_item_color = ConsoleColor.Yellow;
+                                break;
+
+                            case false:
+                                current_item_color = ConsoleColor.Green;
+                                break;
                         }
                         break;
                 }
 
-                GUI_Contents.Print_Current_Directory_Contents(System.IO.Path.GetFileName(contents_enumerator.Current), current_item_color);
+                current_file = new Tuple<string, string, string, ConsoleColor>(file_permissions, file_name, extension_type, current_item_color);
+                Program.current_directory.Add(current_file);
             }
 
             if(contents_enumerator != null)
