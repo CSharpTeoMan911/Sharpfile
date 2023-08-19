@@ -19,6 +19,11 @@ namespace Sharpfile
         }
 
 
-
+        public static void Print_Current_Directory_Contents(string content, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(content);
+            Console.ForegroundColor = Program.Default_Console_Color;
+        }
     }
 }

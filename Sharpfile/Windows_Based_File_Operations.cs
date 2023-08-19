@@ -30,7 +30,42 @@ namespace Sharpfile
 
         public async Task<bool> List_Files()
         {
-            throw new NotImplementedException();
+            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries("C:\\Users\\Teodor Mihail\\source\\repos\\Sharpfile\\Sharpfile\\bin\\Release\\net6.0\\publish");
+            IEnumerator<string> contents_enumerator = contents.GetEnumerator();
+
+
+            while(contents_enumerator.MoveNext() == true)
+            {
+                ConsoleColor current_item_color = ConsoleColor.White;
+                string extension_type = System.IO.Path.GetExtension(contents_enumerator.Current);
+
+                switch(extension_type == String.Empty)
+                {
+                    case true:
+                        current_item_color = ConsoleColor.Blue;
+                        break;
+
+                    case false:
+                        if(extension_type == ".exe")
+                        {
+                            current_item_color = ConsoleColor.Yellow;
+                        }
+                        else
+                        {
+                            current_item_color = ConsoleColor.Green;
+                        }
+                        break;
+                }
+
+                GUI_Contents.Print_Current_Directory_Contents(System.IO.Path.GetFileName(contents_enumerator.Current), current_item_color);
+            }
+
+            if(contents_enumerator != null)
+            {
+                contents_enumerator.Dispose();
+            }
+
+            return true;
         }
 
         public async Task<bool> Navigate_To_Next_Directory()
