@@ -7,6 +7,7 @@
 
         public static ConsoleColor Default_Console_Color = ConsoleColor.White;
         public static string Current_Directory = Directory.GetCurrentDirectory();
+
         public static void Main()
         {
             Default_Console_Color = Console.ForegroundColor;
