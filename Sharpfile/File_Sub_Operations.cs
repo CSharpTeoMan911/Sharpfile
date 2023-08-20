@@ -45,13 +45,78 @@ namespace Sharpfile
         private static Task<string> Get_File_Extension(string path)
         {
             string result = String.Empty;
-            result = System.IO.Path.GetExtension(path);
+
+            if(Directory.Exists(path) == true)
+            {
+                result = "Directory";
+            }
+            else if(File.Exists(path) == true)
+            {
+                result = System.IO.Path.GetExtension(path);
+
+                if(result == String.Empty)
+                {
+                    result = "Binary";
+                }
+            }
             return Task.FromResult(result);
         }
 
         private static async Task<string> Get_File_Permissions(string path)
         {
             string file_permissions = String.Empty;
+
+            try
+            {
+                if (System.IO.File.Exists(path))
+                {
+                    System.IO.FileStream file_stream = System.IO.File.Open(path, System.IO.FileMode.Open);
+                    try
+                    {
+                        StringBuilder permission_builder = new StringBuilder();
+
+                        switch (file_stream.CanRead)
+                        {
+                            case true:
+                                permission_builder.Append('r');
+                                break;
+
+                            case false:
+                                permission_builder.Append('-');
+                                break;
+                        }
+
+                        switch (file_stream.CanWrite)
+                        {
+                            case true:
+                                permission_builder.Append('w');
+                                break;
+
+                            case false:
+                                permission_builder.Append('-');
+                                break;
+                        }
+
+                        System.Diagnostics.Debug.WriteLine("Permissions: " + permission_builder.ToString());
+
+                        file_permissions = permission_builder.ToString();
+                        permission_builder.Clear();
+                    }
+                    catch
+                    {
+
+                    }
+                    finally
+                    {
+                        if (file_stream != null)
+                        {
+                            await file_stream.DisposeAsync();
+                        }
+                    }
+                }
+            }
+            catch { }
+            /*
 
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
             {
@@ -75,8 +140,8 @@ namespace Sharpfile
                 shell_process.Start();
 
                 int space_index = 0;
-                
-                StringBuilder result = new StringBuilder(await shell_process.StandardOutput.ReadLineAsync());
+
+                StringBuilder result = new StringBuilder(shell_process.StandardOutput.ReadLine());
 
                 for (int i = 0; i < result.Length; i++)
                 {
@@ -125,6 +190,8 @@ namespace Sharpfile
                                     break;
                             }
 
+                            System.Diagnostics.Debug.WriteLine("Permissions: " + permission_builder.ToString());
+
                             file_permissions = permission_builder.ToString();
                             permission_builder.Clear();
                         }
@@ -141,13 +208,19 @@ namespace Sharpfile
                         }
                     }
                 }
-                catch
+                catch(Exception e)
                 {
-
+                    System.Diagnostics.Debug.WriteLine("Errors: " + e.Message);
                 }
 
 
-                
+
+            }
+            */
+
+            if(file_permissions == String.Empty)
+            {
+                file_permissions = "__";
             }
 
             return file_permissions;

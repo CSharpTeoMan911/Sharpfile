@@ -32,7 +32,7 @@ namespace Sharpfile
         public async Task<bool> List_Files()
         {
             Program.current_directory.Clear();
-
+            
             IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Program.Current_Directory);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
@@ -49,7 +49,6 @@ namespace Sharpfile
 
                 string file_permissions = await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current);
 
-
                 switch (System.IO.Directory.Exists(contents_enumerator.Current))
                 {
                     case true:
@@ -57,19 +56,10 @@ namespace Sharpfile
                         break;
 
                     case false:
-                        switch (extension_type == String.Empty)
+                        switch (extension_type == "Binary")
                         {
                             case true:
-                                switch (file_permissions.Contains('x'))
-                                {
-                                    case true:
-                                        current_item_color = ConsoleColor.Yellow;
-                                        break;
-
-                                    case false:
-                                        current_item_color = ConsoleColor.Green;
-                                        break;
-                                }
+                                current_item_color = ConsoleColor.Yellow;
                                 break;
 
                             case false:
@@ -87,6 +77,7 @@ namespace Sharpfile
             {
                 contents_enumerator.Dispose();
             }
+            
 
             return true;
         }
