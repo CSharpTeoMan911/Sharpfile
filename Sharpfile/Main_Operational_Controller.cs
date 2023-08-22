@@ -13,7 +13,7 @@ namespace Sharpfile
             List_Files,
             Create_Directory,
             Delete_Directory,
-            Navigate_To_Next_Directory,
+            Navigate_To_Directory,
             Navigate_To_Previous_Directory,
             Search_File,
             Create_File,
@@ -42,14 +42,14 @@ namespace Sharpfile
                     case Operations.List_Files:
                         await current_operation.List_Files();
                         break;
+                    case Operations.Navigate_To_Directory:
+                        await current_operation.Navigate_To_Directory(operation_content);
+                        break;
                     case Operations.Create_Directory:
                         await current_operation.Create_Directory(operation_content);
                         break;
                     case Operations.Delete_Directory:
                         await current_operation.Delete_Directory(operation_content);
-                        break;
-                    case Operations.Navigate_To_Next_Directory:
-                        await current_operation.Navigate_To_Next_Directory();
                         break;
                     case Operations.Navigate_To_Previous_Directory:
                         await current_operation.Navigate_To_Previos_Directory();

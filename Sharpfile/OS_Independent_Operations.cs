@@ -36,13 +36,6 @@ namespace Sharpfile
             return operation_result;
         }
 
-        public async Task<bool> Navigate_To_Next_Directory()
-        {
-            bool operation_result = false;
-            operation_result = await file_system_operations.Navigate_To_Next_Directory();
-            return operation_result;
-        }
-
         public async Task<bool> Navigate_To_Previos_Directory()
         {
             bool operation_result = false;
@@ -78,5 +71,11 @@ namespace Sharpfile
             return operation_result;
         }
 
+        public async Task<bool> Navigate_To_Directory(string directory_path)
+        {
+            bool operation_result = false;
+            operation_result = await file_system_operations.Navigate_To_Directory(directory_path);
+            return operation_result;
+        }
     }
 }

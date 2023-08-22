@@ -82,9 +82,20 @@ namespace Sharpfile
             return true;
         }
 
-        public async Task<bool> Navigate_To_Next_Directory()
+        public async Task<bool> Navigate_To_Directory(string directory_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            try
+            {
+                if(Directory.Exists(directory_path) == true)
+                {
+                    Program.Previous_Directory = Program.Current_Directory;
+                    Program.Current_Directory = directory_path;
+                    result = await List_Files();
+                }
+            }
+            catch { }
+            return result;
         }
 
         public async Task<bool> Navigate_To_Previos_Directory()
