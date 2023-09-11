@@ -22,7 +22,7 @@ namespace Sharpfile
         }
 
 
-        protected static async Task<bool> Initiate_Operation(Operations operation, string operation_content)
+        protected static async void Initiate_Operation(Operations operation, string operation_content)
         {
             OS_Independent_Operations current_operation = null;
 
@@ -68,8 +68,6 @@ namespace Sharpfile
                         break;
                 }
             }
-
-            return true;
         }
     }
 }

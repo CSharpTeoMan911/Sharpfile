@@ -48,7 +48,7 @@ namespace Sharpfile
 
             if(Directory.Exists(path) == true)
             {
-                result = "Directory";
+                result = "dir";
             }
             else if(File.Exists(path) == true)
             {
@@ -56,7 +56,7 @@ namespace Sharpfile
 
                 if(result == String.Empty)
                 {
-                    result = "Binary";
+                    result = "bin";
                 }
             }
             return Task.FromResult(result);

@@ -6,10 +6,9 @@ namespace Sharpfile
     class Program
     {
         public static List<Tuple<string, string, string, ConsoleColor>> current_directory = new List<Tuple<string, string, string, ConsoleColor>>();
-        public static int current_index;
-
-        public static List<string> current_page = new List<string>(10);
-        public static int current_page_index = 0;
+        public static int current_index = 0;
+        public static int cursor_location = 0;
+        public static int start_index = 0;
 
         public static ConsoleColor Default_Console_Color = Console.ForegroundColor;
         public static ConsoleColor Default_Console_Background_Color = Console.BackgroundColor;
@@ -57,66 +56,113 @@ namespace Sharpfile
             ConsoleKeyInfo cki = new ConsoleKeyInfo();
             int previous_index = current_index;
             Console.Clear();
-            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Load_Files_And_Render_Files);
+            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+            Thread.Sleep(500);
             do
             {
                 try
                 {
-                    cki = Console.ReadKey();
+                    
 
-                    bool load_files = false;
-                    switch(cki.Key)
+                    Console.CursorVisible = false;
+                    int end_index = Program.start_index + (Console.WindowHeight - 10);
+
+                    Thread.Sleep(100);
+                    cki = Console.ReadKey(false);
+
+
+
+                    switch (cki.Key)
                     {
                         case ConsoleKey.UpArrow:
+                            current_input.Clear();
                             if(current_index > 0)
                             {
                                 current_index--;
-                                
-                                if(current_page_index > 0)
-                                {
-                                    current_page_index--;
-                                }
+                                cursor_location--;
                             }
 
-                            if (current_index != previous_index)
+                            switch (cursor_location < 0)
                             {
-                                previous_index = current_index;
-                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Render_Files);
+                                case true:
+                                    cursor_location = Console.WindowHeight - 10;
+                                    int calculated_value = current_index - (Console.WindowHeight - 9);
+                                    switch (calculated_value >= 0)
+                                    {
+                                        case true:
+                                            start_index = calculated_value;
+                                            break;
+                                        case false:
+                                            start_index = 0;
+                                            break;
+                                    }
+
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+                                    break;
+                                case false:
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
+                                    break;
                             }
                             break;
                         case ConsoleKey.DownArrow:
+                            current_input.Clear();
                             if (current_index < current_directory.Count - 1)
                             {
                                 current_index++;
-
-                                if (current_page_index < current_page.Count - 1)
-                                {
-                                    current_page_index++;
-                                }
+                                cursor_location++;
                             }
 
                             if (current_index != previous_index)
                             {
                                 previous_index = current_index;
-                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Render_Files);
+
+                                switch (cursor_location > Console.WindowHeight - 11)
+                                {
+                                    case true:
+                                        cursor_location = 0;
+                                        start_index = current_index;
+                                        Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+                                        break;
+                                    case false:
+                                        Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
+                                        break;
+                                }
                             }
                             break;
                         case ConsoleKey.O:
+                            current_input.Clear();
+                            current_input.Append(" OPEN FILE");
                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
                             break;
+                        case ConsoleKey.B:
+                            current_input.Clear();
+                            current_input.Append(" GO BACK");
+                            current_index = 0;
+                            cursor_location = 0;
+                            start_index = 0;
+                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                            break;
                         case ConsoleKey.R:
-                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Load_Files_And_Render_Files);
+                            current_input.Clear();
+                            current_input.Append(" REFRESH");
+                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
                             break;
                         default:
+                            System.Diagnostics.Debug.WriteLine("DEFAULT");
+                            current_input.Clear();
+                            current_input.Append(" N/A");
                             if ((cki.Modifiers & ConsoleModifiers.Control) != 0)
                             {
 
                             }
+                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
                             break;
                     }
 
-                    System.Diagnostics.Debug.WriteLine("Key: " + cki.Key);
-
+                    while (Console.KeyAvailable)
+                    {
+                        Console.ReadKey(true);
+                    }
 
                 }
                 catch { }
@@ -126,17 +172,17 @@ namespace Sharpfile
 
         private static void Size_change_detection_timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine(cursor_location);
+
             if (Current_Buffer_Width != Console.BufferWidth)
             {
-                System.Diagnostics.Debug.WriteLine("Width");
                 Current_Buffer_Width = Console.BufferWidth;
-                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Load_Files_And_Render_Files);
+                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
             }
             else if(Current_Buffer_Height != Console.WindowHeight)
             {
-                System.Diagnostics.Debug.WriteLine("Height");
                 Current_Buffer_Height = Console.WindowHeight;
-                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Load_Files_And_Render_Files);
+                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
             }
         }
     }

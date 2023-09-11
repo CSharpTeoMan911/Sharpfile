@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -100,12 +103,33 @@ namespace Sharpfile
 
         public async Task<bool> Navigate_To_Previos_Directory()
         {
-            throw new NotImplementedException();
+            bool result = false;
+            string current_item_path = Program.Previous_Directory;
+            result = await Navigate_To_Directory(current_item_path);
+            return result;
         }
 
-        public async Task<bool> Open_File(string file_path)
+        public Task<bool> Open_File(string file_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            Process fileopener = new Process();
+
+            try
+            {
+                fileopener.StartInfo.FileName = "explorer";
+                fileopener.StartInfo.Arguments = "\"" + file_path + "\"";
+                fileopener.Start();
+            }
+            catch 
+            { 
+            }
+            finally
+            {
+                if(fileopener != null)
+                fileopener.Dispose();
+            }
+
+            return Task.FromResult(result);
         }
 
         public async Task<bool> Search_File(string file_name)

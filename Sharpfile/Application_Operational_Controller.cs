@@ -10,43 +10,53 @@ namespace Sharpfile
     {
         public enum Application_Operations
         {
-            Load_Files_And_Render_Files,
-            Render_Files,
-            Render_File_Navigation,
-            Open_Files
-
+            Redraw_Window_And_Load_Window,
+            Redraw_Window,
+            Redraw_File_Unit,
+            Open_Files,
+            Go_Back
         }
-        public static async void Controller(Application_Operations operation)
+        public static void Controller(Application_Operations operation)
         {
-            switch(operation)
+            string current_item = String.Empty;
+            string current_item_path = String.Empty;
+
+            Thread.Sleep(100);
+            switch (operation)
             {
-                case Application_Operations.Load_Files_And_Render_Files:
-                    await Initiate_Operation(Operations.List_Files, "");
-                    GUI_Contents.Print_Current_Directory_Contents();
+                case Application_Operations.Redraw_Window_And_Load_Window:
+                    Initiate_Operation(Operations.List_Files, "");
+                    GUI_Contents.Redraw_Screen();
                     break;
-                case Application_Operations.Render_Files:
-                    GUI_Contents.Print_Current_Directory_Contents();
+                case Application_Operations.Redraw_Window:
+                    GUI_Contents.Redraw_Screen();
                     break;
-                case Application_Operations.Render_File_Navigation:
-                    
+                case Application_Operations.Redraw_File_Unit:
+                    GUI_Contents.Redraw_File_Unit();
                     break;
                 case Application_Operations.Open_Files:
-                    string current_item = Program.current_directory[Program.current_index].Item2;
-                    string current_item_path = new FileInfo(current_item).FullName;
-                    switch (await Get_If_Path_Is_File_Or_Directory(current_item_path))
+                    current_item = Program.current_directory[Program.current_index].Item2;
+                    current_item_path = new FileInfo(current_item).FullName;
+                    switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
                     {
                         case true:
-                            await Initiate_Operation(Operations.Navigate_To_Directory, current_item_path);
-                            GUI_Contents.Print_Current_Directory_Contents();
+                            Initiate_Operation(Operations.Navigate_To_Directory, current_item_path);
                             break;
                         case false:
+                            Initiate_Operation(Operations.Open_File, current_item_path);
                             break;
                     }
+                    GUI_Contents.Redraw_Screen();
+                    break;
+
+                case Application_Operations.Go_Back:
+                    Initiate_Operation(Operations.Navigate_To_Previous_Directory, null);
+                    GUI_Contents.Redraw_Screen();
                     break;
             }
         }
 
-        private static Task<bool> Get_If_Path_Is_File_Or_Directory(string current_item_path)
+        private static bool Get_If_Path_Is_File_Or_Directory(string current_item_path)
         {
             bool is_directory = false;
 
@@ -70,7 +80,10 @@ namespace Sharpfile
             }
             catch { }
 
-            return Task.FromResult(is_directory);
+            return is_directory;
         }
+
+
+
     }
 }
