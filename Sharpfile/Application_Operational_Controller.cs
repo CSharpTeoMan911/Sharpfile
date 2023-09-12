@@ -14,7 +14,9 @@ namespace Sharpfile
             Redraw_Window,
             Redraw_File_Unit,
             Open_Files,
-            Go_Back
+            Go_Back,
+            Change_Location,
+            Navigate_To_Directory
         }
         public static void Controller(Application_Operations operation)
         {
@@ -48,7 +50,15 @@ namespace Sharpfile
                     }
                     GUI_Contents.Redraw_Screen();
                     break;
-
+                case Application_Operations.Navigate_To_Directory:
+                    if (Get_If_Path_Is_File_Or_Directory(Program.location_buffer))
+                    {
+                        Initiate_Operation(Operations.Navigate_To_Directory, Program.location_buffer);
+                    }
+                    break;
+                case Application_Operations.Change_Location:
+                    GUI_Contents.Location_Selection_Menu(Program.location_buffer);
+                    break;
                 case Application_Operations.Go_Back:
                     Initiate_Operation(Operations.Navigate_To_Previous_Directory, null);
                     GUI_Contents.Redraw_Screen();
@@ -82,8 +92,6 @@ namespace Sharpfile
 
             return is_directory;
         }
-
-
 
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using TextCopy;
 
 namespace Sharpfile
 {
@@ -20,6 +21,9 @@ namespace Sharpfile
         public static int Current_Buffer_Width = 0;
         public static int Current_Buffer_Height = 0;
         public static StringBuilder current_input = new StringBuilder();
+        public static string location_buffer = String.Empty;
+        public static bool Location_Selection_Mode = false;
+        private static bool Location_Selection_Initiated = false;
 
         public static void Main()
         {
@@ -38,7 +42,7 @@ namespace Sharpfile
             input_thread.Start();
         }   
 
-        private static void Read_Input()
+        private static async void Read_Input()
         {
             //////////////////////////////////////////////
             ///                COMMANDS                ///
@@ -49,7 +53,6 @@ namespace Sharpfile
             // ctrl + f = create file =====> esc = exit | enter = create file with selected file name
             // ctrl + p = change path =====> esc = exit | enter = select path
             // ctrl + s = file search =====> esc = exit | enter = select file name to search
-
 
             List<ConsoleModifiers> modifiers_list = new List<ConsoleModifiers>();
 
@@ -71,92 +74,156 @@ namespace Sharpfile
                     cki = Console.ReadKey(false);
 
 
-
-                    switch (cki.Key)
+                    if (Location_Selection_Mode == false)
                     {
-                        case ConsoleKey.UpArrow:
-                            current_input.Clear();
-                            if(current_index > 0)
-                            {
-                                current_index--;
-                                cursor_location--;
-                            }
+                        switch (cki.Key)
+                        {
+                            case ConsoleKey.UpArrow:
+                                current_input.Clear();
+                                if (current_index > 0)
+                                {
+                                    current_index--;
+                                    cursor_location--;
+                                }
 
-                            switch (cursor_location < 0)
-                            {
-                                case true:
-                                    cursor_location = Console.WindowHeight - 10;
-                                    int calculated_value = current_index - (Console.WindowHeight - 9);
-                                    switch (calculated_value >= 0)
-                                    {
-                                        case true:
-                                            start_index = calculated_value;
-                                            break;
-                                        case false:
-                                            start_index = 0;
-                                            break;
-                                    }
-
-                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                                    break;
-                                case false:
-                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
-                                    break;
-                            }
-                            break;
-                        case ConsoleKey.DownArrow:
-                            current_input.Clear();
-                            if (current_index < current_directory.Count - 1)
-                            {
-                                current_index++;
-                                cursor_location++;
-                            }
-
-                            if (current_index != previous_index)
-                            {
-                                previous_index = current_index;
-
-                                switch (cursor_location > Console.WindowHeight - 11)
+                                switch (cursor_location < 0)
                                 {
                                     case true:
-                                        cursor_location = 0;
-                                        start_index = current_index;
+                                        cursor_location = Console.WindowHeight - 10;
+                                        int calculated_value = current_index - (Console.WindowHeight - 9);
+                                        switch (calculated_value >= 0)
+                                        {
+                                            case true:
+                                                start_index = calculated_value;
+                                                break;
+                                            case false:
+                                                start_index = 0;
+                                                break;
+                                        }
+
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
                                         break;
                                     case false:
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
                                         break;
                                 }
-                            }
-                            break;
-                        case ConsoleKey.O:
-                            current_input.Clear();
-                            current_input.Append(" OPEN FILE");
-                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
-                            break;
-                        case ConsoleKey.B:
-                            current_input.Clear();
-                            current_input.Append(" GO BACK");
-                            current_index = 0;
-                            cursor_location = 0;
-                            start_index = 0;
-                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
-                            break;
-                        case ConsoleKey.R:
-                            current_input.Clear();
-                            current_input.Append(" REFRESH");
-                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                            break;
-                        default:
-                            System.Diagnostics.Debug.WriteLine("DEFAULT");
-                            current_input.Clear();
-                            current_input.Append(" N/A");
-                            if ((cki.Modifiers & ConsoleModifiers.Control) != 0)
-                            {
+                                break;
+                            case ConsoleKey.DownArrow:
+                                current_input.Clear();
+                                if (current_index < current_directory.Count - 1)
+                                {
+                                    current_index++;
+                                    cursor_location++;
+                                }
 
-                            }
-                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                            break;
+                                if (current_index != previous_index)
+                                {
+                                    previous_index = current_index;
+
+                                    switch (cursor_location > Console.WindowHeight - 11)
+                                    {
+                                        case true:
+                                            cursor_location = 0;
+                                            start_index = current_index;
+                                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+                                            break;
+                                        case false:
+                                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
+                                            break;
+                                    }
+                                }
+                                break;
+                            case ConsoleKey.O:
+                                current_input.Clear();
+                                current_input.Append(" OPEN FILE");
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
+                                break;
+                            case ConsoleKey.B:
+                                current_input.Clear();
+                                current_input.Append(" GO BACK");
+                                current_index = 0;
+                                cursor_location = 0;
+                                start_index = 0;
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                                break;
+                            case ConsoleKey.R:
+                                current_input.Clear();
+                                current_input.Append(" REFRESH");
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+                                break;
+                            case ConsoleKey.L:
+                                Location_Selection_Initiated = true;
+                                Location_Selection_Mode = true;
+                                current_input.Append(" LOCATION SELECTION ( PRESS 'CTR + E' TO EXIT )");
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                break;
+                            default:
+                                current_input.Clear();
+                                current_input.Append(" N/A");
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+                                break;
+                        }
+                    }
+                    else
+                    {
+
+                        if (Location_Selection_Initiated == true)
+                        {
+                            Location_Selection_Initiated = false;
+                            location_buffer = String.Empty;
+                        }
+
+
+                        switch(cki.Key)
+                        {
+                            case ConsoleKey.E:
+                                if (cki.Modifiers == ConsoleModifiers.Control)
+                                {
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+                                    current_input.Clear();
+                                    current_input.Append("");
+                                    Location_Selection_Mode = false;
+                                }
+                                break;
+
+                            case ConsoleKey.P:
+                                if (cki.Modifiers == ConsoleModifiers.Control)
+                                {
+                                    location_buffer = ClipboardService.GetText();
+                                    System.Diagnostics.Debug.WriteLine("Paste: " + location_buffer);
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                }
+                                break;
+
+                            case ConsoleKey.Backspace:
+                                if(location_buffer.Length > 0)
+                                {
+                                    location_buffer = location_buffer.Substring(0, location_buffer.Length - 1);
+                                }
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                break;
+
+                            case ConsoleKey.Enter:
+
+                                if(System.IO.Directory.Exists(location_buffer) == true)
+                                {
+                                    Current_Directory = location_buffer;
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+                                    current_input.Clear();
+                                    current_input.Append("");
+                                    Location_Selection_Mode = false;
+                                }
+
+                                break;
+
+                            default:
+                                location_buffer += cki.KeyChar;
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                break;
+                        }
+
+                        System.Diagnostics.Debug.WriteLine("Keys: "+ location_buffer.ToString());
                     }
 
                     while (Console.KeyAvailable)
@@ -172,8 +239,6 @@ namespace Sharpfile
 
         private static void Size_change_detection_timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine(cursor_location);
-
             if (Current_Buffer_Width != Console.BufferWidth)
             {
                 Current_Buffer_Width = Console.BufferWidth;
