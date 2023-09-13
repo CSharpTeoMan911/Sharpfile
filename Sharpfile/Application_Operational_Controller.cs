@@ -39,7 +39,8 @@ namespace Sharpfile
                     break;
                 case Application_Operations.Open_Files:
                     current_item = Program.current_directory[Program.current_index].Item2;
-                    current_item_path = new FileInfo(current_item).FullName;
+                    current_item_path = File_Path_Generator(current_item);
+
                     switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
                     {
                         case true:
@@ -49,6 +50,7 @@ namespace Sharpfile
                             await Initiate_Operation(Operations.Open_File, current_item_path);
                             break;
                     }
+
                     await GUI_Contents.Redraw_Screen();
 
                     switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
@@ -62,13 +64,27 @@ namespace Sharpfile
                     }
                     break;
                 case Application_Operations.Navigate_To_Directory:
-                    if (Get_If_Path_Is_File_Or_Directory(Program.location_buffer))
+                    bool directory_valid = false;
+
+                    lock(Program.Current_Directory)
+                    {
+                        if (Get_If_Path_Is_File_Or_Directory(Program.Current_Directory))
+                        {
+                            directory_valid = true;
+                        }
+                    }
+
+                    if(directory_valid == true)
                     {
                         await Initiate_Operation(Operations.Navigate_To_Directory, Program.location_buffer);
                     }
+
                     break;
                 case Application_Operations.Change_Location:
-                    GUI_Contents.Location_Selection_Menu(Program.location_buffer);
+                    lock(Program.location_buffer)
+                    {
+                        GUI_Contents.Location_Selection_Menu(Program.location_buffer);
+                    }
                     break;
                 case Application_Operations.Go_Back:
                     await Initiate_Operation(Operations.Navigate_To_Previous_Directory, null);
@@ -76,6 +92,23 @@ namespace Sharpfile
                     Thread.Sleep(100);
                     break;
             }
+        }
+
+
+        private static string File_Path_Generator(string file)
+        {
+            string current_item_path = String.Empty;
+
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                current_item_path = Program.Current_Directory + "/" + file;
+            }
+            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                current_item_path = Program.Current_Directory + "\\" + file;
+            }
+
+            return current_item_path;
         }
 
         private static bool Get_If_Path_Is_File_Or_Directory(string current_item_path)

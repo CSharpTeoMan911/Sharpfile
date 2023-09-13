@@ -18,8 +18,10 @@ namespace Sharpfile
         private static string Permissions_Label = "Permissions ";
         private static string Type_Label = "Type: ";
         private static string current_directory_label = "   Location: ";
+        private static string directory_creation_label = "   Directory name: ";
         private static int current_row_count = 0;
         private static int current_unit;
+        private static string previous_error = String.Empty;
 
         public static StringBuilder previous_line = new StringBuilder();
         public static StringBuilder location_line = new StringBuilder();
@@ -69,12 +71,12 @@ namespace Sharpfile
 
             int small_width = (Console.BufferWidth / 10) * 3;
             int large_width = (Console.BufferWidth / 10) * 4;
-            int end_index = Program.start_index + (Console.WindowHeight - 6);
+            int end_index = Program.start_index + (Console.WindowHeight - 7);
 
             switch(Program.Location_Selection_Mode)
             {
                 case true:
-                    await Print_Location_Section(Program.location_buffer);
+                    await Print_Location_Section(Program.Current_Directory);
                     break;
 
                 case false:
@@ -107,7 +109,7 @@ namespace Sharpfile
                 {
                     int small_width = (Console.WindowWidth / 10) * 3;
                     int large_width = (Console.WindowWidth / 10) * 4;
-                    int end_index = Program.start_index + (Console.WindowHeight - 6);
+                    int end_index = Program.start_index + (Console.WindowHeight - 7);
 
                     for (int i = Program.start_index; i < end_index; i++)
                     {
@@ -131,61 +133,79 @@ namespace Sharpfile
 
         private static Task<bool> Print_Location_Section(string directory)
         {
-            Console.SetCursorPosition(0, 0);
-            int end = Console.WindowWidth;
+            string current_label = String.Empty;
 
-            for (int i = 0; i < end; i++)
+            lock(directory)
             {
-                Console.Write('_');
-            }
-
-
-            for (int i = 0; i < end; i++)
-            {
-                if(i < 3)
+                if (Program.Directory_Creation_Mode == true)
                 {
-                    Console.Write(' ');
+                    current_label = directory_creation_label;
                 }
-                else if (i == 3)
+                else if (Program.Directory_Creation_Mode == true)
                 {
-                    Console.Write(current_directory_label);
-                    location_line.Append(current_directory_label);
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    current_label = directory_creation_label;
+                }
+                else
+                {
+                    current_label = current_directory_label;
+                }
 
-                    for(int ii = 0; ii < Console.WindowWidth - current_directory_label.Length - 6; ii++)
+                Console.SetCursorPosition(0, 0);
+                int end = Console.WindowWidth;
+
+                for (int i = 0; i < end; i++)
+                {
+                    Console.Write('_');
+                }
+
+
+                for (int i = 0; i < end; i++)
+                {
+                    if (i < 3)
                     {
-                        if(ii > directory.Length - 1)
-                        {
-                            break;
-                        }
-
-                        if(ii < Console.WindowWidth - current_directory_label.Length - 9)
-                        {
-                            Console.Write(directory[ii]);
-                            location_line.Append(directory[ii]);
-                        }
-                        else
-                        {
-                            Console.Write('.');
-                            location_line.Append('.');
-                        }
+                        Console.Write(' ');
                     }
-                    Console.ForegroundColor = Program.Default_Console_Color;
+                    else if (i == 3)
+                    {
+                        Console.Write(current_label);
+                        location_line.Append(current_label);
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+
+                        for (int ii = 0; ii < Console.WindowWidth - current_label.Length - 6; ii++)
+                        {
+                            if (ii > directory.Length - 1)
+                            {
+                                break;
+                            }
+
+                            if (ii < Console.WindowWidth - current_label.Length - 9)
+                            {
+                                Console.Write(directory[ii]);
+                                location_line.Append(directory[ii]);
+                            }
+                            else
+                            {
+                                Console.Write('.');
+                                location_line.Append('.');
+                            }
+                        }
+                        Console.ForegroundColor = Program.Default_Console_Color;
+                    }
+                    else if (i > 3)
+                    {
+                        end = Console.BufferWidth - current_label.Length - directory.Length;
+                        Console.Write(' ');
+                    }
                 }
-                else if (i > 3)
+
+                Console.Write('\n');
+
+                for (int i = 0; i < Console.BufferWidth; i++)
                 {
-                    end = Console.BufferWidth - current_directory_label.Length - directory.Length;
-                    Console.Write(' ');
+                    Console.Write('_');
                 }
             }
-
-            Console.Write('\n');
-
-            for (int i = 0; i < Console.BufferWidth; i++)
-            {
-                Console.Write('_');
-            }
-
+            
             return Task.FromResult(true);
         }
 
@@ -203,30 +223,53 @@ namespace Sharpfile
             // ctrl + s = file search =====> esc = exit | enter = select file name to search
             // ctrl + c = exit application
 
-            current_unit = unit;
 
-            if (unit < Console.WindowHeight - 10)
+            lock (Program.current_input)
             {
-                int count = (Console.WindowHeight - 10 - unit) + 3;
-
-                for (int i = 0; i < count; i++)
+                lock (Program.Error)
                 {
-                    Console.WriteLine(new String(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, current_row_count + 3);
+                    current_unit = unit;
+
+                    if (unit < Console.WindowHeight - 10)
+                    {
+                        int count = (Console.WindowHeight - 10 - unit) + 3;
+
+                        for (int i = 0; i < count; i++)
+                        {
+                            Console.WriteLine(new String(' ', Console.WindowWidth));
+                        }
+                    }
+
+
+
+                    for (int i = 0; i < Console.BufferWidth; i++)
+                    {
+                        Console.Write('_');
+                    }
+
+                    Console.Write("Input: " + Program.current_input.ToString());
+
+                    if (Program.Error != String.Empty)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write(" " + Program.Error + " ");
+                        Console.ForegroundColor = Program.Default_Console_Color;
+                    }
+
+                    for (int i = 0; i < previous_error.Length + 1; i++)
+                    {
+                        Console.Write(' ');
+                    }
+
+                    previous_error = Program.Error;
+                    Console.Write("\n");
+
+                    for (int i = 0; i < Console.BufferWidth; i++)
+                    {
+                        Console.Write('_');
+                    }
                 }
-            }
-
-
-
-            for (int i = 0; i < Console.BufferWidth; i++)
-            {
-                Console.Write('_');
-            }
-
-            Console.WriteLine("Input: " + Program.current_input.ToString());
-
-            for (int i = 0; i < Console.BufferWidth; i++)
-            {
-                Console.Write('_');
             }
 
             return Task.FromResult(true);
@@ -238,106 +281,118 @@ namespace Sharpfile
         {
             current_row_count++;
             int limiter = 0;
-            Tuple<string, string, string, ConsoleColor> tuple = Program.current_directory[i];
 
-            Console.ForegroundColor = Program.Default_Console_Color;
-
-            if (i == Program.current_index)
+            lock(Program.current_directory)
             {
-                Console.Write(pointer);
-                limiter = pointer.Length;
-            }
+                Tuple<string, string, string, ConsoleColor> tuple = Program.current_directory[i];
 
-            Console.ForegroundColor = tuple.Item4;
-            Console.Write(' ');
+                Console.ForegroundColor = Program.Default_Console_Color;
 
-            for (int ii = 0; ii < small_width - limiter - Permissions_Label.Length - tuple.Item1.Length - 2; ii++)
-            {
-                if (tuple.Item1.Length > small_width - limiter - Permissions_Label.Length - 2)
+                if (i == Program.current_index)
                 {
-                    if (ii < small_width - limiter - Permissions_Label.Length - 5)
-                    {
-                        Console.Write(Permissions_Label[ii]);
-                    }
-                    else
-                    {
-                        Console.Write('.');
-                    }
+                    Console.Write(pointer);
+                    limiter = pointer.Length;
                 }
-                else
-                {
-                    if (ii < Permissions_Label.Length)
-                    {
-                        Console.Write(Permissions_Label[ii]);
-                    }
-                }
-            }
 
-            Console.Write(": " + tuple.Item1 + " ");
-
-            for (int ii = 0; ii < small_width - limiter - Permissions_Label.Length - tuple.Item1.Length - 2; ii++)
-            {
+                Console.ForegroundColor = tuple.Item4;
                 Console.Write(' ');
-            }
 
-            Console.ForegroundColor = Program.Default_Console_Color;
-            Console.Write(separator);
+                int count = 0;
 
-
-
-            Console.ForegroundColor = tuple.Item4;
-            Console.Write(' ');
-            Console.Write(File_Name_Label);
-
-
-            for (int ii = 0; ii < large_width  - Permissions_Label.Length - 2; ii++)
-            {
-                if (tuple.Item2.Length > large_width - limiter - Permissions_Label.Length - 2)
+                for (int ii = 0; ii < small_width - limiter - Permissions_Label.Length - tuple.Item1.Length - 2; ii++)
                 {
-                    if(ii < large_width - limiter - Permissions_Label.Length - 5)
+                    if (tuple.Item1.Length > small_width - limiter - Permissions_Label.Length - 2)
                     {
-                        Console.Write(tuple.Item2[ii]);
+                        if (ii < small_width - limiter - Permissions_Label.Length - 5)
+                        {
+                            Console.Write(Permissions_Label[ii]);
+                            count++;
+                        }
+                        else
+                        {
+                            Console.Write('.');
+                            count++;
+                        }
                     }
                     else
                     {
-                        Console.Write('.');
+                        if (ii < Permissions_Label.Length)
+                        {
+                            Console.Write(Permissions_Label[ii]);
+                            count++;
+                        }
                     }
                 }
-                else
+
+                if (count == 0)
                 {
-                    if (ii < tuple.Item2.Length)
-                    {
-                        Console.Write(tuple.Item2[ii]);
-                    }
-                    else
-                    {
-                        Console.Write(' ');
-                    }
+                    Console.Write("P");
                 }
-            }
 
-            Console.ForegroundColor = Program.Default_Console_Color;
-            Console.Write(separator);
+                Console.Write(": " + tuple.Item1 + " ");
+
+                for (int ii = 0; ii < small_width - limiter - Permissions_Label.Length - tuple.Item1.Length - 2; ii++)
+                {
+                    Console.Write(' ');
+                }
+
+                Console.ForegroundColor = Program.Default_Console_Color;
+                Console.Write(separator);
 
 
-            Console.ForegroundColor = tuple.Item4;
-            Console.Write(' ');
-            Console.Write(Type_Label + tuple.Item3);
 
-
-            for (int ii = 0; ii < small_width - Type_Label.Length - tuple.Item3.Length; ii++)
-            {
+                Console.ForegroundColor = tuple.Item4;
                 Console.Write(' ');
-            }
+                Console.Write(File_Name_Label);
 
-            Console.Write("    ");
-            Console.ForegroundColor = Program.Default_Console_Color;
-            Console.Write("\n");
+
+                for (int ii = 0; ii < large_width - Permissions_Label.Length - 2; ii++)
+                {
+                    if (tuple.Item2.Length > large_width - limiter - Permissions_Label.Length - 2)
+                    {
+                        if (ii < large_width - limiter - Permissions_Label.Length - 5)
+                        {
+                            Console.Write(tuple.Item2[ii]);
+                        }
+                        else
+                        {
+                            Console.Write('.');
+                        }
+                    }
+                    else
+                    {
+                        if (ii < tuple.Item2.Length)
+                        {
+                            Console.Write(tuple.Item2[ii]);
+                        }
+                        else
+                        {
+                            Console.Write(' ');
+                        }
+                    }
+                }
+
+                Console.ForegroundColor = Program.Default_Console_Color;
+                Console.Write(separator);
+
+
+                Console.ForegroundColor = tuple.Item4;
+                Console.Write(' ');
+                Console.Write(Type_Label + tuple.Item3);
+
+
+                for (int ii = 0; ii < small_width - Type_Label.Length - tuple.Item3.Length; ii++)
+                {
+                    Console.Write(' ');
+                }
+
+                Console.Write("    ");
+                Console.ForegroundColor = Program.Default_Console_Color;
+                Console.Write("\n");
+            }
 
             return Task.FromResult(true);
         }
-
-
 
 
         public static async void Print_Current_Directory_Contents(int start_index, int end_index, int small_width, int large_width)
@@ -359,10 +414,8 @@ namespace Sharpfile
         public static async void Location_Selection_Menu(string current_location)
         {
             await Print_Location_Section(current_location);
-            Console.SetCursorPosition(0, current_row_count + 5);
-            Print_Command_Section(current_unit);
-
-            Console.SetCursorPosition(Console.WindowWidth - 1, Console.WindowHeight - 1);
+            await Print_Command_Section(current_unit);
+            Console.SetCursorPosition(0, 0);
         }
     }
 }

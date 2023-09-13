@@ -10,9 +10,16 @@ namespace Sharpfile
 {
     internal class Linux_Based_File_Operations : File_Sub_Operations, File_System_Operations
     {
-        public async Task<bool> Create_Directory(string directory_path)
+        public Task<bool> Create_Directory(string directory_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            if (System.IO.Directory.Exists(directory_path) == false)
+            {
+                System.IO.Directory.CreateDirectory(directory_path);
+            }
+
+            return Task.FromResult(result);
         }
 
         public async Task<bool> Create_File(string file_path)
@@ -57,7 +64,7 @@ namespace Sharpfile
                         break;
 
                     case false:
-                        switch (extension_type == "Binary")
+                        switch (extension_type == "bin")
                         {
                             case true:
                                 current_item_color = ConsoleColor.Yellow;
@@ -115,6 +122,8 @@ namespace Sharpfile
             try
             {
                 fileopener.StartInfo.FileName = "xdg-open";
+                fileopener.StartInfo.RedirectStandardError = true;
+                fileopener.StartInfo.RedirectStandardOutput = true;
                 fileopener.StartInfo.Arguments = "\"" + file_path + "\"";
                 fileopener.Start();
             }

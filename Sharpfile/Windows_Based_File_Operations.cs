@@ -12,9 +12,16 @@ namespace Sharpfile
 {
     internal class Windows_Based_File_Operations:File_Sub_Operations, File_System_Operations
     {
-        public async Task<bool> Create_Directory(string directory_path)
+        public Task<bool> Create_Directory(string directory_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            if(System.IO.Directory.Exists(directory_path) == false)
+            {
+                System.IO.Directory.CreateDirectory(directory_path);
+            }
+
+            return Task.FromResult(result);
         }
 
         public async Task<bool> Create_File(string file_path)
