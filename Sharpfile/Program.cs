@@ -60,18 +60,12 @@ namespace Sharpfile
             int previous_index = current_index;
             Console.Clear();
             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-            Thread.Sleep(500);
             do
             {
                 try
                 {
-                    
-
                     Console.CursorVisible = false;
-                    int end_index = Program.start_index + (Console.WindowHeight - 10);
-
-                    Thread.Sleep(100);
-                    cki = Console.ReadKey(false);
+                    cki = Console.ReadKey(true);
 
 
                     if (Location_Selection_Mode == false)
@@ -89,8 +83,8 @@ namespace Sharpfile
                                 switch (cursor_location < 0)
                                 {
                                     case true:
-                                        cursor_location = Console.WindowHeight - 10;
-                                        int calculated_value = current_index - (Console.WindowHeight - 9);
+                                        cursor_location = Console.WindowHeight - 7;
+                                        int calculated_value = current_index - cursor_location;
                                         switch (calculated_value >= 0)
                                         {
                                             case true:
@@ -120,7 +114,7 @@ namespace Sharpfile
                                 {
                                     previous_index = current_index;
 
-                                    switch (cursor_location > Console.WindowHeight - 11)
+                                    switch (cursor_location > Console.WindowHeight - 7)
                                     {
                                         case true:
                                             cursor_location = 0;
