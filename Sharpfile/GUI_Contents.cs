@@ -73,16 +73,12 @@ namespace Sharpfile
             int large_width = (Console.BufferWidth / 10) * 4;
             int end_index = Program.start_index + (Console.WindowHeight - 7);
 
-            switch(Program.Location_Selection_Mode)
-            {
-                case true:
-                    await Print_Location_Section(Program.Current_Directory);
-                    break;
+            string dir = String.Empty;
+            Program.Directories_Browser.TryPeek(out dir);
 
-                case false:
-                    await Print_Location_Section(Program.Current_Directory);
-                    break;
-            }
+            await Print_Location_Section(dir);
+
+
             Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
             await Print_Command_Section(Program.current_directory.Count);
 
@@ -100,7 +96,11 @@ namespace Sharpfile
                 if (location_line.Length > Console.WindowWidth)
                 {
                     Console.SetCursorPosition(0, 0);
-                    await Print_Location_Section(Program.Current_Directory);
+
+                    string dir = String.Empty;
+                    Program.Directories_Browser.TryPeek(out dir);
+
+                    await Print_Location_Section(dir);
                 }
 
                 Console.SetCursorPosition(0, 3);

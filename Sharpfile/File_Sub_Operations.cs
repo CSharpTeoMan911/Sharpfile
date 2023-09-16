@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.IO;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Sharpfile
 {
@@ -62,166 +61,183 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         private static async Task<string> Get_File_Permissions(string path)
         {
-            string file_permissions = String.Empty;
+            string file_permissions = "__";
 
             try
             {
-                if (System.IO.File.Exists(path))
+                if (System.IO.Path.Exists(path))
                 {
-                    System.IO.FileStream file_stream = System.IO.File.Open(path, System.IO.FileMode.Open);
-                    try
+                    if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
                     {
-                        StringBuilder permission_builder = new StringBuilder();
+                        string file_mode = System.IO.File.GetUnixFileMode(path).ToString();
 
-                        switch (file_stream.CanRead)
+                        if((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserWrite") == true) && (file_mode.Contains("UserExecute") == true))
                         {
-                            case true:
-                                permission_builder.Append('r');
-                                break;
-
-                            case false:
-                                permission_builder.Append('-');
-                                break;
+                            file_permissions = "rwx";
                         }
-
-                        switch (file_stream.CanWrite)
+                        else if((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserWrite") == true))
                         {
-                            case true:
-                                permission_builder.Append('w');
-                                break;
-
-                            case false:
-                                permission_builder.Append('-');
-                                break;
+                            file_permissions = "rw_";
                         }
-
-                        System.Diagnostics.Debug.WriteLine("Permissions: " + permission_builder.ToString());
-
-                        file_permissions = permission_builder.ToString();
-                        permission_builder.Clear();
+                        else if ((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserExecute") == true))
+                        {
+                            file_permissions = "r_x";
+                        }
+                        else if ((file_mode.Contains("UserWrite") == true) && (file_mode.Contains("UserExecute") == true))
+                        {
+                            file_permissions = "_wx";
+                        }
+                        else if (file_mode.Contains("UserRead") == true) 
+                        {
+                            file_permissions = "r__";
+                        }
+                        else if (file_mode.Contains("UserWrite") == true)
+                        {
+                            file_permissions = "_w_";
+                        }
+                        else if (file_mode.Contains("UserExecute") == true)
+                        {
+                            file_permissions = "__x";
+                        }
+                        else
+                        {
+                            file_permissions = "___";
+                        }
                     }
-                    catch
+                    else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
                     {
-
-                    }
-                    finally
-                    {
-                        if (file_stream != null)
+                        
+                        if (System.IO.Directory.Exists(path) == true)
                         {
-                            await file_stream.DisposeAsync();
+                            System.Security.AccessControl.DirectorySecurity directory_security = new DirectoryInfo(path).GetAccessControl();
+
+                            AuthorizationRuleCollection rules = directory_security.GetAccessRules(true, true, typeof(NTAccount));
+
+                            //Go through the rules returned from the DirectorySecurity
+                            foreach (AuthorizationRule rule in rules)
+                            {
+                                //If we find one that matches the identity we are looking for
+                                if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    var filesystemAccessRule = (FileSystemAccessRule)rule;
+
+                                    //Cast to a FileSystemAccessRule to check for access rights
+                                    if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && (filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData)  > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "rw";
+                                    }
+                                    else if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "r_";
+                                    }
+                                    else if ((filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData) > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "_w";
+                                    }
+                                    else
+                                    {
+                                        file_permissions = "__";
+                                    }
+                                }
+                            }
                         }
+                        else if (System.IO.File.Exists(path) == true)
+                        {
+                            System.Security.AccessControl.FileSecurity file_security = new FileInfo(path).GetAccessControl(AccessControlSections.All);
+
+                            AuthorizationRuleCollection rules = file_security.GetAccessRules(true, true, typeof(NTAccount));
+
+                            //Go through the rules returned from the DirectorySecurity
+                            foreach (AuthorizationRule rule in rules)
+                            {
+                                //If we find one that matches the identity we are looking for
+                                if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    var filesystemAccessRule = (FileSystemAccessRule)rule;
+
+                                    //Cast to a FileSystemAccessRule to check for access rights
+                                    if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && (filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData)  > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "rw";
+                                    }
+                                    else if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "r_";
+                                    }
+                                    else if ((filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData) > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
+                                    {
+                                        file_permissions = "_w";
+                                    }
+                                    else
+                                    {
+                                        file_permissions = "__";
+                                    }
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            file_permissions = "__";
+                        }
+                    }
+
+                }
+            }
+            catch 
+            {
+                file_permissions = await Read_File_Permissions_Using_Stream(path);
+            }
+ 
+
+            return file_permissions;
+        }
+
+
+
+        private static async Task<string> Read_File_Permissions_Using_Stream(string path)
+        {
+            string file_permissions = "__";
+
+            try
+            {
+                System.IO.FileStream file_stream = System.IO.File.Open(path, System.IO.FileMode.Open);
+                try
+                {
+                    if (file_stream.CanRead == true && file_stream.CanWrite == true)
+                    {
+                        file_permissions = "rw";
+                    }
+                    else if (file_stream.CanRead == true)
+                    {
+                        file_permissions = "r_";
+                    }
+                    else if (file_stream.CanWrite == true)
+                    {
+                        file_permissions = "_w";
+                    }
+                    else
+                    {
+                        file_permissions = "__";
+                    }
+                }
+                catch
+                {
+                    file_permissions = "__";
+                }
+                finally
+                {
+                    if (file_stream != null)
+                    {
+                        await file_stream.DisposeAsync();
                     }
                 }
             }
             catch { }
-            /*
-
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
-            {
-                string file_name = await Get_File_Name(path);
-
-                string argument = "-c \"cd '" + new DirectoryInfo(path).Parent + "' && ls -all '" + file_name + "'\"";
-
-                if (System.IO.Directory.Exists(path))
-                {
-                    argument = "-c \"cd '" + new DirectoryInfo(path).Parent + "' && ls -ld '" + file_name + "'\"";
-                }
-
-                // SET PROCESS 
-                System.Diagnostics.ProcessStartInfo shell_process_start_info = new System.Diagnostics.ProcessStartInfo("/bin/bash", argument);
-                shell_process_start_info.RedirectStandardError = true;
-                shell_process_start_info.RedirectStandardInput = true;
-                shell_process_start_info.RedirectStandardOutput = true;
-
-                System.Diagnostics.Process shell_process = new System.Diagnostics.Process();
-                shell_process.StartInfo = shell_process_start_info;
-                shell_process.Start();
-
-                int space_index = 0;
-
-                StringBuilder result = new StringBuilder(shell_process.StandardOutput.ReadLine());
-
-                for (int i = 0; i < result.Length; i++)
-                {
-                    if (result[i] == ' ')
-                    {
-                        space_index = i;
-                        break;
-                    }
-                }
-
-
-                result.Remove(space_index, (result.Length - space_index));
-                file_permissions = result.ToString();
-                result.Clear();
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
-            {
-                try
-                {
-                    if(System.IO.File.Exists(path))
-                    {
-                        System.IO.FileStream file_stream = System.IO.File.Open(path, System.IO.FileMode.Open);
-                        try
-                        {
-                            StringBuilder permission_builder = new StringBuilder();
-
-                            switch(file_stream.CanRead)
-                            {
-                                case true:
-                                    permission_builder.Append('r');
-                                    break;
-
-                                case false:
-                                    permission_builder.Append('-');
-                                    break;
-                            }
-
-                            switch(file_stream.CanWrite)
-                            {
-                                case true:
-                                    permission_builder.Append('w');
-                                    break;
-
-                                case false:
-                                    permission_builder.Append('-');
-                                    break;
-                            }
-
-                            System.Diagnostics.Debug.WriteLine("Permissions: " + permission_builder.ToString());
-
-                            file_permissions = permission_builder.ToString();
-                            permission_builder.Clear();
-                        }
-                        catch
-                        {
-
-                        }
-                        finally
-                        {
-                            if(file_stream != null)
-                            {
-                                await file_stream.DisposeAsync();
-                            }
-                        }
-                    }
-                }
-                catch(Exception e)
-                {
-                    System.Diagnostics.Debug.WriteLine("Errors: " + e.Message);
-                }
-
-
-
-            }
-            */
-
-            if(file_permissions == String.Empty)
-            {
-                file_permissions = "__";
-            }
 
             return file_permissions;
         }

@@ -43,7 +43,10 @@ namespace Sharpfile
         {
             Program.current_directory.Clear();
 
-            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Program.Current_Directory);
+            string path = String.Empty;
+            Program.Directories_Browser.TryPeek(out path);
+
+            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(path);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
 
@@ -81,6 +84,7 @@ namespace Sharpfile
                 }
 
                 current_file = new Tuple<string, string, string, ConsoleColor>(file_permissions, file_name, extension_type, current_item_color);
+                
                 Program.current_directory.Add(current_file);
             }
 
@@ -99,8 +103,7 @@ namespace Sharpfile
             {
                 if(Directory.Exists(directory_path) == true)
                 {
-                    Program.Previous_Directory = Program.Current_Directory;
-                    Program.Current_Directory = directory_path;
+                    Program.Directories_Browser.Push(directory_path);
                     result = await List_Files();
                 }
             }
@@ -111,8 +114,17 @@ namespace Sharpfile
         public async Task<bool> Navigate_To_Previos_Directory()
         {
             bool result = false;
-            string current_item_path = Program.Previous_Directory;
-            result = await Navigate_To_Directory(current_item_path);
+
+            if(Program.Directories_Browser.Count > 1)
+            {
+                string? path = String.Empty;
+                Program.Directories_Browser.TryPop(out path);
+
+                Program.Directories_Browser.TryPeek(out path);
+
+                result = await List_Files();
+            }
+
             return result;
         }
 

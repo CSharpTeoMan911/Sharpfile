@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using TextCopy;
 
@@ -6,16 +9,18 @@ namespace Sharpfile
 {
     class Program
     {
+
         public static List<Tuple<string, string, string, ConsoleColor>> current_directory = new List<Tuple<string, string, string, ConsoleColor>>();
         public static int current_index = 0;
         public static int cursor_location = 0;
         public static int start_index = 0;
 
+        public static string? clipboard = String.Empty;
+
         public static ConsoleColor Default_Console_Color = Console.ForegroundColor;
         public static ConsoleColor Default_Console_Background_Color = Console.BackgroundColor;
 
-        public static string Current_Directory = Directory.GetCurrentDirectory();
-        public static string Previous_Directory = Directory.GetCurrentDirectory();
+        public static ConcurrentStack<string> Directories_Browser = new ConcurrentStack<string>();
 
         public static int Current_Buffer_Width = 0;
         public static int Current_Buffer_Height = 0;
@@ -24,16 +29,20 @@ namespace Sharpfile
         public static string? location_buffer = String.Empty;
 
         public static bool Location_Selection_Mode = false;
-        private static bool Location_Selection_Initiated = false;
 
         public static bool Directory_Creation_Mode = false;
         private static bool Directory_Creation_Initiated = false;
 
         public static string Error = String.Empty;
 
+
         public static void Main()
         {
+            Directories_Browser.Push(Directory.GetCurrentDirectory());
+            Console.TreatControlCAsInput = true;
             Console.CursorVisible = false;
+
+
             Current_Buffer_Width = Console.BufferWidth;
             Default_Console_Color = Console.ForegroundColor;
 
@@ -65,7 +74,7 @@ namespace Sharpfile
             }
         }
 
-        private static void Read_Input()
+        private static async void Read_Input()
         {
             //////////////////////////////////////////////
             ///                COMMANDS                ///
@@ -80,7 +89,6 @@ namespace Sharpfile
             List<ConsoleModifiers> modifiers_list = new List<ConsoleModifiers>();
 
             ConsoleKeyInfo cki = new ConsoleKeyInfo();
-            int previous_index = current_index;
             Console.Clear();
             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
             do
@@ -90,7 +98,8 @@ namespace Sharpfile
                     Console.CursorVisible = false;
                     cki = Console.ReadKey(true);
 
-                 
+
+
                     if (Location_Selection_Mode == false)
                     {
                         if(Directory_Creation_Mode == false)
@@ -125,10 +134,11 @@ namespace Sharpfile
                                                     start_index = 0;
                                                     break;
                                             }
-
+                                            System.Diagnostics.Debug.WriteLine("Window");
                                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
                                             break;
                                         case false:
+                                            System.Diagnostics.Debug.WriteLine("File unit");
                                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
                                             break;
                                     }
@@ -147,21 +157,18 @@ namespace Sharpfile
                                         cursor_location++;
                                     }
 
-                                    if (current_index != previous_index)
+                                    switch (cursor_location > Console.WindowHeight - 8)
                                     {
-                                        previous_index = current_index;
-
-                                        switch (cursor_location > Console.WindowHeight - 8)
-                                        {
-                                            case true:
-                                                cursor_location = 0;
-                                                start_index = current_index;
-                                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                                                break;
-                                            case false:
-                                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
-                                                break;
-                                        }
+                                        case true:
+                                            cursor_location = 0;
+                                            start_index = current_index;
+                                            System.Diagnostics.Debug.WriteLine("Window");
+                                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+                                            break;
+                                        case false:
+                                            System.Diagnostics.Debug.WriteLine("File unit");
+                                            Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
+                                            break;
                                     }
                                     break;
                                 case ConsoleKey.O:
@@ -174,7 +181,6 @@ namespace Sharpfile
 
                                     current_input.Clear();
                                     current_input.Append(" OPEN FILE");
-
                                     if (current_directory[current_index].Item1[0] == 'r')
                                     {
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
@@ -200,6 +206,14 @@ namespace Sharpfile
                                     start_index = 0;
                                     Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
                                     break;
+                                case ConsoleKey.C:
+
+                                    if (cki.Modifiers == (ConsoleModifiers.Control))
+                                    {
+                                        Console.Clear();
+                                        System.Environment.Exit(0);
+                                    }
+                                    break;
                                 case ConsoleKey.R:
 
                                     if (Error != String.Empty)
@@ -222,12 +236,14 @@ namespace Sharpfile
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                     }
 
-                                    Location_Selection_Initiated = true;
                                     Location_Selection_Mode = true;
+
+                                    string path = String.Empty;
+                                    Directories_Browser.TryPeek(out path);
 
                                     lock(location_buffer)
                                     {
-                                        location_buffer = String.Empty;
+                                        location_buffer = path;
                                     }
 
                                     current_input.Clear();
@@ -267,19 +283,11 @@ namespace Sharpfile
                     else
                     {
 
-                        if (Location_Selection_Initiated == true)
-                        {
-                            Location_Selection_Initiated = false;
-                            lock (location_buffer)
-                            {
-                                location_buffer = String.Empty;
-                            }
-                        }
 
-
-                        switch(cki.Key)
+                        switch (cki.Key)
                         {
                             case ConsoleKey.E:
+
                                 Error = String.Empty;
                                 if (cki.Modifiers == ConsoleModifiers.Control)
                                 {
@@ -298,18 +306,27 @@ namespace Sharpfile
                                 }
                                 break;
 
-                            case ConsoleKey.P:
-                                Error = String.Empty;
-                                if (cki.Modifiers == ConsoleModifiers.Control)
+                            case ConsoleKey.C:
+
+                                if (cki.Modifiers == (ConsoleModifiers.Control))
+                                {
+                                    Console.Clear();
+                                    System.Environment.Exit(0);
+                                }
+                                else
                                 {
                                     lock (location_buffer)
                                     {
-                                        location_buffer = ClipboardService.GetText();
-                                        if (location_buffer == null)
-                                        {
-                                            location_buffer = String.Empty;
-                                        }
+                                        location_buffer += cki.KeyChar;
                                     }
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                }
+                                break;
+
+                            case ConsoleKey.V:
+                                if ((cki.Modifiers.ToString() == "Shift, Control"))
+                                {
+                                    location_buffer += await ClipboardService.GetTextAsync();
                                     Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                 }
                                 else
@@ -323,6 +340,7 @@ namespace Sharpfile
                                 break;
 
                             case ConsoleKey.Backspace:
+                            
                                 Error = String.Empty;
 
                                 lock(location_buffer)
@@ -336,6 +354,7 @@ namespace Sharpfile
                                 break;
 
                             case ConsoleKey.Enter:
+
                                 Error = String.Empty;
 
                                 lock (location_buffer)
@@ -344,7 +363,8 @@ namespace Sharpfile
                                     {
                                         current_input.Clear();
                                         current_input.Append(" N/A");
-                                        Current_Directory = location_buffer;
+
+                                        Directories_Browser.Push(location_buffer);
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
                                         current_input.Clear();
@@ -361,6 +381,7 @@ namespace Sharpfile
                                 break;
 
                             default:
+
                                 Error = String.Empty;
                                 lock(location_buffer)
                                 {
@@ -371,10 +392,7 @@ namespace Sharpfile
                         }
                     }
 
-                    while (Console.KeyAvailable)
-                    {
-                        Console.ReadKey(true);
-                    }
+                    Empty_STDIN_Buffered_Stream();
 
                 }
                 catch { }
@@ -393,6 +411,17 @@ namespace Sharpfile
             {
                 Current_Buffer_Height = Console.WindowHeight;
                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
+            }
+        }
+
+        private static void Empty_STDIN_Buffered_Stream()
+        {   
+            if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                while (Console.KeyAvailable)
+                {
+                    Console.ReadKey(true);
+                }
             }
         }
     }

@@ -44,6 +44,8 @@ namespace Sharpfile
                     switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
                     {
                         case true:
+                            Program.current_index= 0;
+                            Program.cursor_location = 0;
                             await Initiate_Operation(Operations.Navigate_To_Directory, current_item_path);
                             break;
                         case false:
@@ -64,21 +66,15 @@ namespace Sharpfile
                     }
                     break;
                 case Application_Operations.Navigate_To_Directory:
-                    bool directory_valid = false;
+                    string path = String.Empty;
+                    Program.Directories_Browser.TryPeek(out path);
 
-                    lock(Program.Current_Directory)
+                    if (Get_If_Path_Is_File_Or_Directory(path))
                     {
-                        if (Get_If_Path_Is_File_Or_Directory(Program.Current_Directory))
-                        {
-                            directory_valid = true;
-                        }
-                    }
-
-                    if(directory_valid == true)
-                    {
+                        Program.current_index = 0;
+                        Program.cursor_location = 0;
                         await Initiate_Operation(Operations.Navigate_To_Directory, Program.location_buffer);
                     }
-
                     break;
                 case Application_Operations.Change_Location:
                     lock(Program.location_buffer)
@@ -99,13 +95,17 @@ namespace Sharpfile
         {
             string current_item_path = String.Empty;
 
+            string path = String.Empty;
+            Program.Directories_Browser.TryPeek(out path);
+
+
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                current_item_path = Program.Current_Directory + "/" + file;
+                current_item_path = path + "/" + file;
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                current_item_path = Program.Current_Directory + "\\" + file;
+                current_item_path = path + "\\" + file;
             }
 
             return current_item_path;
