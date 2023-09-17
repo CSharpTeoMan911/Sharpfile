@@ -77,5 +77,15 @@ namespace Sharpfile
             operation_result = await file_system_operations.Navigate_To_Directory(directory_path);
             return operation_result;
         }
+
+        Task<bool> File_System_Operations.Move_Or_Rename_File()
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<bool> File_System_Operations.Copy_File()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

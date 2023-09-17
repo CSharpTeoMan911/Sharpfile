@@ -28,7 +28,7 @@ namespace Sharpfile
 
         public Task<bool> Open_Current_Directory_In_Terminal()
         {
-            bool result = true;
+            bool result = false;
 
             string path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
@@ -39,7 +39,9 @@ namespace Sharpfile
             {
                 p.StartInfo.UseShellExecute = true;
                 p.StartInfo.FileName = "/bin/bash";
-                p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; gnome-terminal;\"";
+                p.StartInfo.Arguments = "-c \"cd '/mnt/c/Users/Teodor Mihail'; gnome-terminal;\"";
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.RedirectStandardOutput = true;
 
                 result = p.Start();
 
@@ -47,28 +49,31 @@ namespace Sharpfile
                 {
                     p.StartInfo.UseShellExecute = true;
                     p.StartInfo.FileName = "/bin/bash";
-                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; konsole;\"";
+                    p.StartInfo.Arguments = "-c \"cd '/mnt/c/Users/Teodor Mihail'; x-terminal-emulator;\"";
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    result = p.Start();
                 }
-
-                result = p.Start();
 
                 if (result == false)
                 {
                     p.StartInfo.UseShellExecute = true;
                     p.StartInfo.FileName = "/bin/bash";
-                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; xfce4-terminal;\"";
+                    p.StartInfo.Arguments = "-c \"cd '/mnt/c/Users/Teodor Mihail'; xfce4-terminal;\"";
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    result = p.Start();
                 }
-
-                result = p.Start();
 
                 if (result == false)
                 {
                     p.StartInfo.UseShellExecute = true;
                     p.StartInfo.FileName = "/bin/bash";
-                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; x-terminal-emulator;\"";
+                    p.StartInfo.Arguments = "-c \"cd '/mnt/c/Users/Teodor Mihail'; konsole;\"";
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    result = p.Start();
                 }
-
-                p.Start();
             }
             catch
             {
@@ -229,39 +234,68 @@ namespace Sharpfile
             bool result = true;
             System.IO.FileInfo file_info = new System.IO.FileInfo(file_name);
 
-            StringBuilder formated_file_name = new StringBuilder(file_info.Name);
-            formated_file_name.Remove(file_info.Name.Length - file_info.Extension.Length - 1, file_info.Extension.Length);
-
-
-
-            for (int i = 0; i < Program.current_directory.Count; i++)
+            if (file_info.Name.Length > 0)
             {
-                if (Program.current_directory[i].Item2 == file_info.Name)
+                string path = String.Empty;
+                Program.Directories_Browser.TryPeek(out path);
+
+                StringBuilder formated_file_name = new StringBuilder(file_info.Name);
+                formated_file_name.Remove(file_info.Name.Length - file_info.Extension.Length, file_info.Extension.Length);
+
+
+
+                for (int i = 0; i < Program.current_directory.Count; i++)
                 {
-                    Program.current_index = i;
-                    break;
+                    StringBuilder formated_current_directory_file_name = new StringBuilder(path);
+                    formated_current_directory_file_name.Append("/");
+                    formated_current_directory_file_name.Append(Program.current_directory[i].Item2);
+
+                    System.IO.FileInfo pre_formated_current_directory_file_name_file_info = new System.IO.FileInfo(formated_current_directory_file_name.ToString());
+                    formated_current_directory_file_name.Clear();
+                    formated_current_directory_file_name.Append(pre_formated_current_directory_file_name_file_info.Name);
+                    formated_current_directory_file_name.Remove(pre_formated_current_directory_file_name_file_info.Name.Length - pre_formated_current_directory_file_name_file_info.Extension.Length, pre_formated_current_directory_file_name_file_info.Extension.Length);
+
+                    if (Program.current_directory[i].Item2 == file_info.Name)
+                    {
+                        formated_current_directory_file_name.Clear();
+                        Program.current_index = i;
+                        break;
+                    }
+                    else if (formated_current_directory_file_name.ToString() == formated_file_name.ToString())
+                    {
+                        formated_current_directory_file_name.Clear();
+                        Program.current_index = i;
+                        break;
+                    }
+
+                    formated_current_directory_file_name.Clear();
                 }
-                else if (Program.current_directory[i].Item2 == formated_file_name.ToString())
+
+
+                if (Program.current_index > Console.WindowHeight - 8)
                 {
-                    Program.current_index = i;
-                    break;
+                    while (Program.current_index - Program.start_index > Console.WindowHeight - 8)
+                    {
+                        Program.start_index += Console.WindowHeight - 8;
+                    }
+
+                    Program.cursor_location = Program.current_index - Program.start_index;
                 }
+
+                formated_file_name.Clear();
             }
-
-
-            if (Program.current_index > Console.WindowHeight - 8)
-            {
-                while (Program.current_index - Program.start_index > Console.WindowHeight - 8)
-                {
-                    Program.start_index += Console.WindowHeight - 8;
-                }
-
-                Program.cursor_location = Program.current_index - Program.start_index;
-            }
-
-            formated_file_name.Clear();
 
             return Task.FromResult(result);
+        }
+
+        Task<bool> File_System_Operations.Move_Or_Rename_File()
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<bool> File_System_Operations.Copy_File()
+        {
+            throw new NotImplementedException();
         }
     }
 }

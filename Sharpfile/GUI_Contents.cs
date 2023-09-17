@@ -389,11 +389,7 @@ namespace Sharpfile
                 Console.Write(Type_Label + tuple.Item3);
 
 
-                for (int ii = 0; ii < small_width - Type_Label.Length - tuple.Item3.Length; ii++)
-                {
-                    Console.Write(' ');
-                }
-
+               
                 Console.Write("    ");
                 Console.ForegroundColor = Program.Default_Console_Color;
                 Console.Write("\n");

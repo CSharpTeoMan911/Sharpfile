@@ -55,26 +55,9 @@ namespace Sharpfile
             size_change_detection_timer.Interval = 1000;
             size_change_detection_timer.Start();
 
-            Console.CancelKeyPress += Console_CancelKeyPress;
-
-            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-
             Thread input_thread = new Thread(Read_Input);
             input_thread.Priority = ThreadPriority.Highest;
             input_thread.Start();
-        }
-
-        private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
-        {
-            Console.Clear();
-        }
-
-        private static void CurrentDomain_ProcessExit(object? sender, EventArgs e)
-        {
-            if (current_directory != null)
-            {
-                current_directory.Clear();
-            }
         }
 
         private static async void Read_Input()
@@ -377,6 +360,7 @@ namespace Sharpfile
                                 if (cki.Modifiers == (ConsoleModifiers.Control))
                                 {
                                     Console.Clear();
+                                    Console.CursorVisible = true;
                                     System.Environment.Exit(0);
                                 }
                                 else
@@ -481,7 +465,7 @@ namespace Sharpfile
                                         current_input.Clear();
                                         current_input.Append("");
 
-                                        Directory_Creation_Mode = false;
+                                        Item_Search_Mode = false;
                                         Selction_Mode = false;
 
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
@@ -542,6 +526,13 @@ namespace Sharpfile
                 }
             }
 
+        }
+
+        ~Program()
+        {
+            Console.Clear();
+            Console.CursorVisible = true;
+            System.Environment.Exit(0);
         }
     }
 }
