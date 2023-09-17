@@ -19,9 +19,12 @@ namespace Sharpfile
         private static string Type_Label = "Type: ";
         private static string current_directory_label = "   Location: ";
         private static string directory_creation_label = "   Directory name: ";
+        private static string item_search_label = "   Item name: ";
         private static int current_row_count = 0;
         private static int current_unit;
-        private static string previous_error = String.Empty;
+        private static string Input = "Input: ";
+
+        private static int previous_input_end_index;
 
         public static StringBuilder previous_line = new StringBuilder();
         public static StringBuilder location_line = new StringBuilder();
@@ -141,9 +144,9 @@ namespace Sharpfile
                 {
                     current_label = directory_creation_label;
                 }
-                else if (Program.Directory_Creation_Mode == true)
+                else if (Program.Item_Search_Mode == true)
                 {
-                    current_label = directory_creation_label;
+                    current_label = item_search_label;
                 }
                 else
                 {
@@ -243,12 +246,17 @@ namespace Sharpfile
 
 
 
+
+                    Console.SetCursorPosition(0, Console.WindowHeight - 4);
+
                     for (int i = 0; i < Console.BufferWidth; i++)
                     {
                         Console.Write('_');
                     }
 
-                    Console.Write("Input: " + Program.current_input.ToString());
+                    string current_input = Program.current_input.ToString();
+
+                    Console.Write(Input + current_input);
 
                     if (Program.Error != String.Empty)
                     {
@@ -257,12 +265,12 @@ namespace Sharpfile
                         Console.ForegroundColor = Program.Default_Console_Color;
                     }
 
-                    for (int i = 0; i < previous_error.Length + 1; i++)
+                    for (int i = 0; i < previous_input_end_index; i++)
                     {
                         Console.Write(' ');
                     }
 
-                    previous_error = Program.Error;
+                    previous_input_end_index = Input.Length + current_input.Length + Program.Error.Length;
                     Console.Write("\n");
 
                     for (int i = 0; i < Console.BufferWidth; i++)

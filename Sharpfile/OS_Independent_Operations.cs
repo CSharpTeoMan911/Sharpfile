@@ -50,10 +50,10 @@ namespace Sharpfile
             return operation_result;
         }
 
-        public async Task<bool> Create_File(string file_path)
+        public async Task<bool> Open_Current_Directory_In_Terminal()
         {
             bool operation_result = false;
-            operation_result = await file_system_operations.Create_File(file_path);
+            operation_result = await file_system_operations.Open_Current_Directory_In_Terminal();
             return operation_result;
         }
 

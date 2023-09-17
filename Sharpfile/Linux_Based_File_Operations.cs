@@ -14,27 +14,103 @@ namespace Sharpfile
         {
             bool result = false;
 
-            if (System.IO.Directory.Exists(directory_path) == false)
+            try
             {
-                System.IO.Directory.CreateDirectory(directory_path);
+                if (System.IO.Directory.Exists(directory_path) == false)
+                {
+                    System.IO.Directory.CreateDirectory(directory_path);
+                }
             }
+            catch { }
 
             return Task.FromResult(result);
         }
 
-        public async Task<bool> Create_File(string file_path)
+        public Task<bool> Open_Current_Directory_In_Terminal()
         {
-            throw new NotImplementedException();
+            bool result = true;
+
+            string path = String.Empty;
+            Program.Directories_Browser.TryPeek(out path);
+
+            Process p = new Process();
+
+            try
+            {
+                p.StartInfo.UseShellExecute = true;
+                p.StartInfo.FileName = "/bin/bash";
+                p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; gnome-terminal;\"";
+
+                result = p.Start();
+
+                if (result == false)
+                {
+                    p.StartInfo.UseShellExecute = true;
+                    p.StartInfo.FileName = "/bin/bash";
+                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; konsole;\"";
+                }
+
+                result = p.Start();
+
+                if (result == false)
+                {
+                    p.StartInfo.UseShellExecute = true;
+                    p.StartInfo.FileName = "/bin/bash";
+                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; xfce4-terminal;\"";
+                }
+
+                result = p.Start();
+
+                if (result == false)
+                {
+                    p.StartInfo.UseShellExecute = true;
+                    p.StartInfo.FileName = "/bin/bash";
+                    p.StartInfo.Arguments = "/bin/bash -c \"cd / home /; x-terminal-emulator;\"";
+                }
+
+                p.Start();
+            }
+            catch
+            {
+                if (p != null)
+                {
+                    p.Dispose();
+                }
+            }
+
+            return Task.FromResult(true);
         }
 
-        public async Task<bool> Delete_Directory(string directory_path)
+        public Task<bool> Delete_Directory(string directory_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            try
+            {
+                if (System.IO.Directory.Exists(directory_path) == true)
+                {
+                    System.IO.Directory.Delete(directory_path, true);
+                }
+            }
+            catch { }
+
+            return Task.FromResult(result);
         }
 
-        public async Task<bool> Delete_File(string file_path)
+        public Task<bool> Delete_File(string file_path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            try
+            {
+                if (System.IO.File.Exists(file_path) == true)
+                {
+                    System.IO.File.Delete(file_path);
+                }
+            }
+            catch { }
+
+            return Task.FromResult(result);
         }
 
         public async Task<bool> List_Files()
@@ -43,6 +119,7 @@ namespace Sharpfile
 
             string path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
+            Program.current_directory_permissions = await File_Sub_Operations.Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, path);
 
             IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(path);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
@@ -116,9 +193,6 @@ namespace Sharpfile
             {
                 string? path = String.Empty;
                 Program.Directories_Browser.TryPop(out path);
-
-                Program.Directories_Browser.TryPeek(out path);
-
                 result = await List_Files();
             }
 
@@ -150,9 +224,44 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
-        public async Task<bool> Search_File(string file_name)
+        public Task<bool> Search_File(string file_name)
         {
-            throw new NotImplementedException();
+            bool result = true;
+            System.IO.FileInfo file_info = new System.IO.FileInfo(file_name);
+
+            StringBuilder formated_file_name = new StringBuilder(file_info.Name);
+            formated_file_name.Remove(file_info.Name.Length - file_info.Extension.Length - 1, file_info.Extension.Length);
+
+
+
+            for (int i = 0; i < Program.current_directory.Count; i++)
+            {
+                if (Program.current_directory[i].Item2 == file_info.Name)
+                {
+                    Program.current_index = i;
+                    break;
+                }
+                else if (Program.current_directory[i].Item2 == formated_file_name.ToString())
+                {
+                    Program.current_index = i;
+                    break;
+                }
+            }
+
+
+            if (Program.current_index > Console.WindowHeight - 8)
+            {
+                while (Program.current_index - Program.start_index > Console.WindowHeight - 8)
+                {
+                    Program.start_index += Console.WindowHeight - 8;
+                }
+
+                Program.cursor_location = Program.current_index - Program.start_index;
+            }
+
+            formated_file_name.Clear();
+
+            return Task.FromResult(result);
         }
     }
 }

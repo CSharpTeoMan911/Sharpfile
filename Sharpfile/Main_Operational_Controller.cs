@@ -16,7 +16,7 @@ namespace Sharpfile
             Navigate_To_Directory,
             Navigate_To_Previous_Directory,
             Search_File,
-            Create_File,
+            Open_Current_Directory_In_Terminal,
             Delete_File,
             Open_File
         }
@@ -57,8 +57,8 @@ namespace Sharpfile
                     case Operations.Search_File:
                         await current_operation.Search_File(operation_content);
                         break;
-                    case Operations.Create_File:
-                        await current_operation.Create_File(operation_content);
+                    case Operations.Open_Current_Directory_In_Terminal:
+                        await current_operation.Open_Current_Directory_In_Terminal();
                         break;
                     case Operations.Delete_File:
                         await current_operation.Delete_File(operation_content);

@@ -16,17 +16,20 @@ namespace Sharpfile
             Open_Files,
             Go_Back,
             Change_Location,
-            Navigate_To_Directory
+            Navigate_To_Directory,
+            Create_Directory,
+            Delete_File_Or_Directory,
+            Item_Search,
+            Terminal
         }
         public static async void Controller(Application_Operations operation)
         {
-            string current_item = String.Empty;
-            string current_item_path = String.Empty;
+            string formated_path = String.Empty;
 
             switch (operation)
             {
                 case Application_Operations.Redraw_Window_And_Load_Window:
-                    await Initiate_Operation(Operations.List_Files, "");
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
                     await GUI_Contents.Redraw_Screen();
                     Thread.Sleep(1000);
                     break;
@@ -38,24 +41,23 @@ namespace Sharpfile
                     GUI_Contents.Redraw_File_Unit();
                     break;
                 case Application_Operations.Open_Files:
-                    current_item = Program.current_directory[Program.current_index].Item2;
-                    current_item_path = File_Path_Generator(current_item);
+                    formated_path = File_Path_Generator(Program.current_directory[Program.current_index].Item2);
 
-                    switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
+                    switch (Get_If_Path_Is_File_Or_Directory(formated_path))
                     {
                         case true:
                             Program.current_index= 0;
                             Program.cursor_location = 0;
-                            await Initiate_Operation(Operations.Navigate_To_Directory, current_item_path);
+                            await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
                             break;
                         case false:
-                            await Initiate_Operation(Operations.Open_File, current_item_path);
+                            await Initiate_Operation(Operations.Open_File, formated_path);
                             break;
                     }
 
                     await GUI_Contents.Redraw_Screen();
 
-                    switch (Get_If_Path_Is_File_Or_Directory(current_item_path))
+                    switch (Get_If_Path_Is_File_Or_Directory(formated_path))
                     {
                         case true:
                             Thread.Sleep(1000);
@@ -73,13 +75,13 @@ namespace Sharpfile
                     {
                         Program.current_index = 0;
                         Program.cursor_location = 0;
-                        await Initiate_Operation(Operations.Navigate_To_Directory, Program.location_buffer);
+                        await Initiate_Operation(Operations.Navigate_To_Directory, Program.selection_buffer);
                     }
                     break;
                 case Application_Operations.Change_Location:
-                    lock(Program.location_buffer)
+                    lock(Program.selection_buffer)
                     {
-                        GUI_Contents.Location_Selection_Menu(Program.location_buffer);
+                        GUI_Contents.Location_Selection_Menu(Program.selection_buffer);
                     }
                     break;
                 case Application_Operations.Go_Back:
@@ -87,28 +89,63 @@ namespace Sharpfile
                     await GUI_Contents.Redraw_Screen();
                     Thread.Sleep(100);
                     break;
+                case Application_Operations.Create_Directory:
+                    formated_path = File_Path_Generator(Program.selection_buffer);
+                    await Initiate_Operation(Operations.Create_Directory, formated_path);
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
+                    await GUI_Contents.Redraw_Screen();
+                    Thread.Sleep(1000);
+                    break;
+                case Application_Operations.Delete_File_Or_Directory:
+
+                    formated_path = File_Path_Generator(Program.current_directory[Program.current_index].Item2);
+
+                    switch (Get_If_Path_Is_File_Or_Directory(formated_path))
+                    {
+                        case true:
+                            await Initiate_Operation(Operations.Delete_Directory, formated_path);
+                            break;
+                        case false:
+                            await Initiate_Operation(Operations.Delete_File, formated_path);
+                            break;
+                    }
+
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
+                    await GUI_Contents.Redraw_Screen();
+                    Thread.Sleep(1000);
+                    break;
+                case Application_Operations.Item_Search:
+                    formated_path = File_Path_Generator(Program.selection_buffer);
+
+                    await Initiate_Operation(Operations.Search_File, formated_path);
+                    await GUI_Contents.Redraw_Screen();
+                    break;
+                case Application_Operations.Terminal:
+                    await Initiate_Operation(Operations.Open_Current_Directory_In_Terminal, String.Empty);
+                    break;
             }
         }
 
 
         private static string File_Path_Generator(string file)
         {
-            string current_item_path = String.Empty;
-
             string path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
-
+            StringBuilder formated_path = new StringBuilder(path);
+            
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                current_item_path = path + "/" + file;
+                formated_path.Append("/");
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                current_item_path = path + "\\" + file;
+                formated_path.Append("\\");
             }
 
-            return current_item_path;
+            formated_path.Append(file);
+
+            return formated_path.ToString();
         }
 
         private static bool Get_If_Path_Is_File_Or_Directory(string current_item_path)
