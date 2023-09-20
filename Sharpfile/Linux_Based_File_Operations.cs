@@ -124,7 +124,8 @@ namespace Sharpfile
 
             string path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
-            Program.current_directory_permissions = await File_Sub_Operations.Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, path);
+
+            Program.current_directory_permissions = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, path) as string));
 
             IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(path);
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
@@ -136,11 +137,11 @@ namespace Sharpfile
 
                 ConsoleColor current_item_color = Program.Default_Console_Color;
 
-                string file_name = await Sub_Operations_Controller(Sub_Operations.Get_File_Name, contents_enumerator.Current);
+                string file_name = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Name, contents_enumerator.Current)) as string);
 
-                string extension_type = await Sub_Operations_Controller(Sub_Operations.Get_File_Extension, contents_enumerator.Current);
+                string extension_type = Null_Check(await Sub_Operations_Controller(Sub_Operations.Get_File_Extension, contents_enumerator.Current) as string);
 
-                string file_permissions = await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current);
+                string file_permissions = Null_Check(await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current) as string);
 
                 switch (System.IO.Directory.Exists(contents_enumerator.Current))
                 {
@@ -288,12 +289,52 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
-        Task<bool> File_System_Operations.Move_Or_Rename_File()
+        public Task<bool> Move_Or_Rename_File(string path, bool is_directory)
+        {
+            string current_path = String.Empty;
+            Program.Directories_Browser.TryPeek(out current_path);
+
+            if (current_path != null || current_path != String.Empty)
+            {
+                switch (is_directory)
+                {
+                    case true:
+                        System.IO.Directory.Move(current_path, path);
+                        break;
+
+                    case false:
+                        System.IO.File.Move(current_path, path);
+                        break;
+                }
+            }
+
+            return Task.FromResult(true);
+        }
+
+        public async Task<bool> Move_Or_Rename_File(string path)
+        {
+            bool result = false;
+            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+
+            File.Move(formated_path, path);
+            return result;
+        }
+
+        public async Task<bool> Move_Or_Rename_Directory(string path)
+        {
+            bool result = false;
+            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+
+            Directory.Move(formated_path, path);
+            return result;
+        }
+
+        public Task<bool> Copy_File(string path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Copy_File()
+        public Task<bool> Copy_Directory(string path)
         {
             throw new NotImplementedException();
         }

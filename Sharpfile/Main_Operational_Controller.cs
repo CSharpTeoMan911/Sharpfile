@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Sharpfile
 {
-    internal class Main_Operational_Controller
+    internal class Main_Operational_Controller:File_Sub_Operations
     {
         public enum Operations
         {
@@ -18,11 +18,15 @@ namespace Sharpfile
             Search_File,
             Open_Current_Directory_In_Terminal,
             Delete_File,
-            Open_File
+            Open_File,
+            Rename_Or_Move_File,
+            Rename_Or_Move_Directory,
+            Copy_File,
+            Copy_Directory
         }
 
 
-        protected static async Task<bool> Initiate_Operation(Operations operation, string operation_content)
+        protected static async void Initiate_Operation(Operations operation, string operation_content)
         {
             OS_Independent_Operations current_operation = null;
 
@@ -66,10 +70,20 @@ namespace Sharpfile
                     case Operations.Open_File:
                         await current_operation.Open_File(operation_content);
                         break;
+                    case Operations.Rename_Or_Move_File:
+                        await current_operation.Move_Or_Rename_File(operation_content);
+                        break;
+                    case Operations.Rename_Or_Move_Directory:
+                        await current_operation.Move_Or_Rename_Directory(operation_content);
+                        break;
+                    case Operations.Copy_File:
+                        await current_operation.Copy_File(operation_content);
+                        break;
+                    case Operations.Copy_Directory:
+                        await current_operation.Copy_Directory(operation_content);
+                        break;
                 }
             }
-
-            return true;
         }
     }
 }

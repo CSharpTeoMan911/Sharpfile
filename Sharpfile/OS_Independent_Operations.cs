@@ -78,12 +78,26 @@ namespace Sharpfile
             return operation_result;
         }
 
-        Task<bool> File_System_Operations.Move_Or_Rename_File()
+        public async Task<bool> Move_Or_Rename_File(string path)
+        {
+            bool operation_result = false;
+            operation_result = await file_system_operations.Move_Or_Rename_File(path);
+            return operation_result;
+        }
+
+        public async Task<bool> Move_Or_Rename_Directory(string path)
+        {
+            bool operation_result = false;
+            operation_result = await file_system_operations.Move_Or_Rename_Directory(path);
+            return operation_result;
+        }
+
+        public Task<bool> Copy_File(string path)
         {
             throw new NotImplementedException();
         }
 
-        Task<bool> File_System_Operations.Copy_File()
+        public Task<bool> Copy_Directory(string path)
         {
             throw new NotImplementedException();
         }

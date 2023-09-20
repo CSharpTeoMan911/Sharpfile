@@ -20,13 +20,12 @@ namespace Sharpfile
         private static string current_directory_label = "   Location: ";
         private static string directory_creation_label = "   Directory name: ";
         private static string item_search_label = "   Item name: ";
+        private static string file_name_label = "   File name: ";
         private static int current_row_count = 0;
         private static int current_unit;
         private static string Input = "Input: ";
 
         private static int previous_input_end_index;
-
-        public static StringBuilder previous_line = new StringBuilder();
         public static StringBuilder location_line = new StringBuilder();
 
         public static void Main_Menu_GUI()
@@ -147,6 +146,10 @@ namespace Sharpfile
                 else if (Program.Item_Search_Mode == true)
                 {
                     current_label = item_search_label;
+                }
+                else if (Program.File_Rename_Mode == true)
+                {
+                    current_label = file_name_label;
                 }
                 else
                 {
@@ -386,12 +389,40 @@ namespace Sharpfile
 
                 Console.ForegroundColor = tuple.Item4;
                 Console.Write(' ');
-                Console.Write(Type_Label + tuple.Item3);
+                Console.Write(Type_Label);
 
 
-               
-                Console.Write("    ");
+                for (int ii = 0; ii < small_width - Type_Label.Length - 2; ii++)
+                {
+                    if (tuple.Item3.Length > small_width - limiter - Type_Label.Length - 2)
+                    {
+                        if (ii < small_width - limiter - Type_Label.Length - 5)
+                        {
+                            if(ii < tuple.Item3.Length)
+                            {
+                                Console.Write(tuple.Item3[ii]);
+                            }
+                        }
+                        else
+                        {
+                            Console.Write('.');
+                        }
+                    }
+                    else
+                    {
+                        if (ii < tuple.Item3.Length)
+                        {
+                            Console.Write(tuple.Item3[ii]);
+                        }
+                        else
+                        {
+                            Console.Write(' ');
+                        }
+                    }
+                }
+
                 Console.ForegroundColor = Program.Default_Console_Color;
+                Console.Write("    ");
                 Console.Write("\n");
             }
 

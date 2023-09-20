@@ -30,11 +30,13 @@ namespace Sharpfile
         public static StringBuilder current_input = new StringBuilder();
         public static string? selection_buffer = String.Empty;
 
-        public static bool Selction_Mode = false;
+        public static bool Selection_Mode = false;
 
         public static bool Location_Selection_Mode = false;
         public static bool Directory_Creation_Mode = false;
         public static bool Item_Search_Mode = false;
+        public static bool File_Rename_Mode = false;
+        public static bool File_Relocation_Mode = false;
 
         public static string Error = String.Empty;
 
@@ -84,12 +86,11 @@ namespace Sharpfile
                     cki = Console.ReadKey(true);
 
 
-                    if (Selction_Mode == false)
+                    if (Selection_Mode == false)
                     {
                         switch (cki.Key)
                         {
                             case ConsoleKey.UpArrow:
-
                                 if (current_input.ToString() != String.Empty)
                                 {
                                     Error = String.Empty;
@@ -126,7 +127,6 @@ namespace Sharpfile
                                 }
                                 break;
                             case ConsoleKey.DownArrow:
-
                                 if (current_input.ToString() != String.Empty)
                                 {
                                     Error = String.Empty;
@@ -154,13 +154,7 @@ namespace Sharpfile
                                 }
                                 break;
                             case ConsoleKey.O:
-
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                }
-
+                                Error = String.Empty;
                                 current_input.Clear();
                                 current_input.Append(" OPEN FILE");
                                 if (current_directory[current_index].Item1[0] == 'r')
@@ -174,11 +168,7 @@ namespace Sharpfile
                                 }
                                 break;
                             case ConsoleKey.B:
-
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                }
+                                Error = String.Empty;
 
                                 current_input.Clear();
                                 current_input.Append(" GO BACK");
@@ -188,6 +178,7 @@ namespace Sharpfile
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
                                 break;
                             case ConsoleKey.C:
+                                Error = String.Empty;
 
                                 if (cki.Modifiers == (ConsoleModifiers.Control))
                                 {
@@ -202,24 +193,42 @@ namespace Sharpfile
                                 }
                                 break;
                             case ConsoleKey.R:
+                                Error = String.Empty;
 
-                                if (Error != String.Empty)
+                                if (cki.Modifiers == (ConsoleModifiers.Control))
                                 {
-                                    Error = String.Empty;
-                                }
+                                    if (current_directory[current_index].Item1[0] == 'r' && current_directory[current_index].Item1[1] == 'w')
+                                    {
+                                        Selection_Mode = true;
+                                        File_Rename_Mode = true;
 
-                                current_input.Clear();
-                                current_input.Append(" REFRESH");
-                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+                                        lock (selection_buffer)
+                                        {
+                                            selection_buffer = current_directory[current_index].Item2;
+                                        }
+
+                                        current_input.Clear();
+                                        current_input.Append(" FILE RENAME ( PRESS 'Esc' TO EXIT )");
+                                    }
+                                    else
+                                    {
+                                        current_input.Append(" FILE RENAME ");
+                                        Error = "[ Error: Insufficient permissions ]";
+                                    }
+
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                }
+                                else
+                                {
+                                    current_input.Clear();
+                                    current_input.Append(" REFRESH");
+                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+                                }
                                 break;
                             case ConsoleKey.L:
+                                Error = String.Empty;
 
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                }
-
-                                Selction_Mode = true;
+                                Selection_Mode = true;
                                 Location_Selection_Mode = true;
 
                                 string location_path = String.Empty;
@@ -231,12 +240,11 @@ namespace Sharpfile
                                 }
 
                                 current_input.Clear();
-                                current_input.Append(" LOCATION SELECTION ( PRESS 'CTR + E' TO EXIT )");
+                                current_input.Append(" LOCATION SELECTION ( PRESS 'Esc' TO EXIT )");
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                 break;
 
                             case ConsoleKey.D:
-
                                 if(cki.Modifiers == ConsoleModifiers.Control)
                                 {
                                     current_input.Clear();
@@ -253,19 +261,16 @@ namespace Sharpfile
                                 }
                                 else
                                 {
-                                    if (Error != String.Empty)
-                                    {
-                                        Error = String.Empty;
-                                    }
+                                    Error = String.Empty;
 
 
-                                    Selction_Mode = true;
+                                    Selection_Mode = true;
                                     Directory_Creation_Mode = true;
 
                                     selection_buffer = String.Empty;
 
                                     current_input.Clear();
-                                    current_input.Append(" DIRECTORY CREATION ( PRESS 'CTR + E' TO EXIT )");
+                                    current_input.Append(" DIRECTORY CREATION ( PRESS 'Esc' TO EXIT )");
                                 }
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                 break;
@@ -287,13 +292,9 @@ namespace Sharpfile
                                 break;
 
                             case ConsoleKey.S:
+                                Error = String.Empty;
 
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                }
-
-                                Selction_Mode = true;
+                                Selection_Mode = true;
                                 Item_Search_Mode = true;
 
                                 lock (selection_buffer)
@@ -302,31 +303,49 @@ namespace Sharpfile
                                 }
 
                                 current_input.Clear();
-                                current_input.Append(" ITEM SEARCH ( PRESS 'CTR + E' TO EXIT )");
+                                current_input.Append(" ITEM SEARCH ( 'Esc' TO EXIT )");
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                 break;
 
-                            default:
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                }
-
-                                current_input.Clear();
-                                current_input.Append(String.Empty);
-                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                break;
-
                             case ConsoleKey.T:
-                                if (Error != String.Empty)
-                                {
-                                    Error = String.Empty;
-                                }
+                                Error = String.Empty;
 
                                 current_input.Clear();
                                 current_input.Append(" TERMINAL");
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Terminal);
                                 Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                break;
+
+                            case ConsoleKey.M:
+                                if(current_directory[current_index].Item1[0] == 'r' && current_directory[current_index].Item1[1] == 'w')
+                                {
+                                    Error = String.Empty;
+
+
+                                    Selection_Mode = true;
+                                    File_Relocation_Mode = true;
+
+                                    selection_buffer = String.Empty;
+
+                                    current_input.Clear();
+                                    current_input.Append(" FILE RELOCATION ( PRESS 'Esc' TO EXIT )");
+                                }
+                                else
+                                {
+                                    current_input.Clear();
+                                    current_input.Append(" FILE RELOCATION");
+                                    Error = "[ Error: Insufficient permissions ]";
+                                }
+
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                break;
+
+                            default:
+                                Error = String.Empty;
+
+                                current_input.Clear();
+                                current_input.Append(String.Empty);
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
                                 break;
                         }
                     }
@@ -334,25 +353,12 @@ namespace Sharpfile
                     {
                         switch (cki.Key)
                         {
-                            case ConsoleKey.E:
-
-                                Error = String.Empty;
-                                if (cki.Modifiers == ConsoleModifiers.Control)
-                                {
-                                    current_input.Clear();
-                                    current_input.Append("");
-                                    Location_Selection_Mode = false;
-                                    Selction_Mode = false;
-                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                }
-                                else
-                                {
-                                    lock (selection_buffer)
-                                    {
-                                        selection_buffer += cki.KeyChar;
-                                    }
-                                    Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                }
+                            case ConsoleKey.Escape:
+                                current_input.Clear();
+                                current_input.Append("");
+                                Location_Selection_Mode = false;
+                                Selection_Mode = false;
+                                Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
                                 break;
 
                             case ConsoleKey.C:
@@ -416,7 +422,7 @@ namespace Sharpfile
                                             current_input.Append("");
 
                                             Location_Selection_Mode = false;
-                                            Selction_Mode = false;
+                                            Selection_Mode = false;
 
                                             Directories_Browser.Push(selection_buffer);
                                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
@@ -444,7 +450,7 @@ namespace Sharpfile
                                             current_input.Append("");
 
                                             Directory_Creation_Mode = false;
-                                            Selction_Mode = false;
+                                            Selection_Mode = false;
 
                                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Create_Directory);
                                             Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
@@ -466,9 +472,39 @@ namespace Sharpfile
                                         current_input.Append("");
 
                                         Item_Search_Mode = false;
-                                        Selction_Mode = false;
+                                        Selection_Mode = false;
 
                                         Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
+                                    }
+                                }
+                                else if (File_Rename_Mode == true)
+                                {
+                                    Error = String.Empty;
+
+                                    lock (selection_buffer)
+                                    {
+                                        current_input.Clear();
+                                        current_input.Append("");
+
+                                        File_Rename_Mode = false;
+                                        Selection_Mode = false;
+
+                                        Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Rename_File);
+                                    }
+                                }
+                                else if (File_Relocation_Mode == true)
+                                {
+                                    Error = String.Empty;
+
+                                    lock (selection_buffer)
+                                    {
+                                        current_input.Clear();
+                                        current_input.Append("");
+
+                                        File_Relocation_Mode = false;
+                                        Selection_Mode = false;
+
+                                        Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
                                     }
                                 }
                                 break;
@@ -489,7 +525,7 @@ namespace Sharpfile
                 }
                 catch { }
             } 
-            while (cki.Key != ConsoleKey.Escape);
+            while (true);
         }
 
         private static void Size_change_detection_timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -517,7 +553,7 @@ namespace Sharpfile
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                if(Selction_Mode == false)
+                if(Selection_Mode == false)
                 {
                     while (Console.KeyAvailable)
                     {

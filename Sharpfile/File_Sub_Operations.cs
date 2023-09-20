@@ -13,12 +13,15 @@ namespace Sharpfile
             Get_File_Name,
             Get_File_Extension,
             Get_File_Permissions,
+            Get_If_File_Is_Directory,
+            File_Path_Generation
         }
 
 
-        protected static async Task<string> Sub_Operations_Controller(Sub_Operations sub_operation, string path)
+        protected static async Task<object> Sub_Operations_Controller(Sub_Operations sub_operation, string path)
         {
-            string result = String.Empty;
+            object result = String.Empty;
+
             switch(sub_operation)
             {
                 case Sub_Operations.Get_File_Name:
@@ -29,6 +32,12 @@ namespace Sharpfile
                     break;
                 case Sub_Operations.Get_File_Permissions:
                     result = await Get_File_Permissions(path);
+                    break;
+                case Sub_Operations.Get_If_File_Is_Directory:
+                    result = await Get_If_Path_Is_File_Or_Directory(path);
+                    break;
+                case Sub_Operations.File_Path_Generation:
+                    result = await File_Path_Generator(path);
                     break;
             }
             return result;
@@ -240,6 +249,59 @@ namespace Sharpfile
             catch { }
 
             return file_permissions;
+        }
+
+
+        private static Task<bool> Get_If_Path_Is_File_Or_Directory(string current_item_path)
+        {
+            bool is_directory = false;
+
+
+            try
+            {
+                if (Directory.Exists(current_item_path))
+                {
+                    is_directory = true;
+                }
+            }
+            catch { }
+
+            try
+            {
+                if (File.Exists(current_item_path))
+                {
+                    is_directory = false;
+                }
+            }
+            catch { }
+
+            return Task.FromResult(is_directory);
+        }
+
+        private static Task<string> File_Path_Generator(string file)
+        {
+            string path = String.Empty;
+            Program.Directories_Browser.TryPeek(out path);
+
+            StringBuilder formated_path = new StringBuilder(path);
+
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                formated_path.Append("/");
+            }
+            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                formated_path.Append("\\");
+            }
+
+            formated_path.Append(file);
+
+            return Task.FromResult(formated_path.ToString());
+        }
+
+        protected static string Null_Check(string? result)
+        {
+            return result == null ? String.Empty : result;
         }
     }
 }
