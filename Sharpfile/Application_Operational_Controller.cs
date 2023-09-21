@@ -27,39 +27,34 @@ namespace Sharpfile
             Move_File,
             Copy_File
         }
-        public static async void Controller(Application_Operations operation)
+        public static async Task<bool> Controller(Application_Operations operation)
         {
             string formated_path = String.Empty;
-
             switch (operation)
             {
                 case Application_Operations.Redraw_Window_And_Load_Window:
-                    Initiate_Operation(Operations.List_Files, String.Empty);
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(1000);
                     break;
                 case Application_Operations.Redraw_Window:
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(100);
                     break;
                 case Application_Operations.Redraw_File_Unit:
-                    GUI_Contents.Redraw_File_Unit();
+                    await GUI_Contents.Redraw_File_Unit();
                     break;
                 case Application_Operations.Open_Files:
-                    formated_path = Null_Check(await Sub_Operations_Controller( Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+                    formated_path = Null_Check(await Sub_Operations_Controller( Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
                     switch (Convert.ToBoolean(await Sub_Operations_Controller(Sub_Operations.Get_If_File_Is_Directory, formated_path)))
                     {
                         case true:
                             Program.current_index= 0;
                             Program.cursor_location = 0;
-                            Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
+                            await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
                             await GUI_Contents.Redraw_Screen();
-                            Thread.Sleep(1000);
                             break;
                         case false:
-                            Initiate_Operation(Operations.Open_File, formated_path);
+                            await Initiate_Operation(Operations.Open_File, formated_path);
                             await GUI_Contents.Redraw_Screen();
-                            Thread.Sleep(100);
                             break;
                     }
                     break;
@@ -71,7 +66,7 @@ namespace Sharpfile
                     {
                         Program.current_index = 0;
                         Program.cursor_location = 0;
-                        Initiate_Operation(Operations.Navigate_To_Directory, Program.selection_buffer);
+                        await Initiate_Operation(Operations.Navigate_To_Directory, Null_Check(Program.selection_buffer));
                     }
                     break;
                 case Application_Operations.Change_Location:
@@ -81,45 +76,41 @@ namespace Sharpfile
                     }
                     break;
                 case Application_Operations.Go_Back:
-                    Initiate_Operation(Operations.Navigate_To_Previous_Directory, null);
+                    await Initiate_Operation(Operations.Navigate_To_Previous_Directory, null);
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(100);
                     break;
                 case Application_Operations.Create_Directory:
                     formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.selection_buffer) as string);
-                    Initiate_Operation(Operations.Create_Directory, formated_path);
-                    Initiate_Operation(Operations.List_Files, String.Empty);
+                    await Initiate_Operation(Operations.Create_Directory, formated_path);
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(1000);
                     break;
                 case Application_Operations.Delete_File_Or_Directory:
-                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
                     switch (Convert.ToBoolean(await Sub_Operations_Controller(Sub_Operations.Get_If_File_Is_Directory, formated_path)))
                     {
                         case true:
-                            Initiate_Operation(Operations.Delete_Directory, formated_path);
+                            await Initiate_Operation(Operations.Delete_Directory, formated_path);
                             break;
                         case false:
-                            Initiate_Operation(Operations.Delete_File, formated_path);
+                            await Initiate_Operation(Operations.Delete_File, formated_path);
                             break;
                     }
 
-                    Initiate_Operation(Operations.List_Files, String.Empty);
+                    await Initiate_Operation(Operations.List_Files, String.Empty);
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(1000);
                     break;
                 case Application_Operations.Item_Search:
                     formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.selection_buffer) as string);
-                    Initiate_Operation(Operations.Search_File, formated_path);
+                    await Initiate_Operation(Operations.Search_File, formated_path);
                     await GUI_Contents.Redraw_Screen();
-                    Thread.Sleep(1000);
                     break;
                 case Application_Operations.Terminal:
-                    Initiate_Operation(Operations.Open_Current_Directory_In_Terminal, String.Empty);
+                    await Initiate_Operation(Operations.Open_Current_Directory_In_Terminal, String.Empty);
                     break;
                 case Application_Operations.Rename_File:
-                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
                     if(formated_path != String.Empty)
                     {
@@ -127,25 +118,63 @@ namespace Sharpfile
                         {
                             case true:
                                 formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.selection_buffer) as string);
-                                Initiate_Operation(Operations.Rename_Or_Move_Directory, formated_path);
+                                await Initiate_Operation(Operations.Rename_Or_Move_Directory, formated_path);
                                 break;
                             case false:
                                 formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.selection_buffer) as string);
-                                Initiate_Operation(Operations.Rename_Or_Move_File, formated_path);
+                                await Initiate_Operation(Operations.Rename_Or_Move_File, formated_path);
                                 break;
                         }
 
-                        Initiate_Operation(Operations.List_Files, String.Empty);
+                        await Initiate_Operation(Operations.List_Files, String.Empty);
                         await GUI_Contents.Redraw_Screen();
-                        Thread.Sleep(1000);
                     }
                     break;
                 case Application_Operations.Move_File:
+                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
+                    if (formated_path != String.Empty)
+                    {
+                        switch (Convert.ToBoolean(await Sub_Operations_Controller(Sub_Operations.Get_If_File_Is_Directory, formated_path)))
+                        {
+                            case true:
+                                formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.Custom_File_Path_Generation, Null_Check(Program.selection_buffer), Program.current_directory.ElementAt(Program.current_index).Item2) as string);
+                                await Initiate_Operation(Operations.Rename_Or_Move_Directory, formated_path);
+                                break;
+                            case false:
+                                formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.Custom_File_Path_Generation, Null_Check(Program.selection_buffer), Program.current_directory.ElementAt(Program.current_index).Item2) as string);
+                                await Initiate_Operation(Operations.Rename_Or_Move_File, formated_path);
+                                break;
+                        }
+
+                        await Initiate_Operation(Operations.List_Files, String.Empty);
+                        await GUI_Contents.Redraw_Screen();
+                    }
                     break;
                 case Application_Operations.Copy_File:
+                    formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
+
+                    if (formated_path != String.Empty)
+                    {
+                        switch (Convert.ToBoolean(await Sub_Operations_Controller(Sub_Operations.Get_If_File_Is_Directory, formated_path)))
+                        {
+                            case true:
+                                formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.Custom_File_Path_Generation, Program.selection_buffer, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
+                                await Initiate_Operation(Operations.Copy_Directory, formated_path);
+                                break;
+                            case false:
+                                formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.Custom_File_Path_Generation, Program.selection_buffer, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
+                                await Initiate_Operation(Operations.Copy_File, formated_path);
+                                break;
+                        }
+
+                        await Initiate_Operation(Operations.List_Files, String.Empty);
+                        await GUI_Contents.Redraw_Screen();
+                    }
                     break;
             }
+
+            return true;
         }
 
     }

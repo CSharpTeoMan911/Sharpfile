@@ -25,6 +25,9 @@ namespace Sharpfile
         private static int current_unit;
         private static string Input = "Input: ";
 
+        private static int test_counter = 0;
+        private static int test_total_counter = 0;
+
         private static int previous_input_end_index;
         public static StringBuilder location_line = new StringBuilder();
 
@@ -67,6 +70,11 @@ namespace Sharpfile
 
         public static async Task<bool> Redraw_Screen()
         {
+            lock(Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
             current_row_count = 0;
 
             await Clear_Console();
@@ -79,21 +87,30 @@ namespace Sharpfile
             Program.Directories_Browser.TryPeek(out dir);
 
             await Print_Location_Section(dir);
-
-
-            Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
+            await Print_Current_Directory_Contents(Program.current_index, end_index, small_width, large_width);
             await Print_Command_Section(Program.current_directory.Count);
 
             Console.SetCursorPosition(0, 0);
             Console.CursorVisible = false;
+
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
             return true;
         }
 
-        public static async void Redraw_File_Unit()
+        public static async Task<bool> Redraw_File_Unit()
         {
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
             current_row_count = 0;
 
-            if(Console.GetCursorPosition().Left == 0 && Console.GetCursorPosition().Top == 0)
+            if (Console.GetCursorPosition().Left == 0 && Console.GetCursorPosition().Top == 0)
             {
                 if (location_line.Length > Console.WindowWidth)
                 {
@@ -107,34 +124,37 @@ namespace Sharpfile
 
                 Console.SetCursorPosition(0, 3);
 
-                if(Console.GetCursorPosition().Left == 0 && Console.GetCursorPosition().Top == 3)
+                if (Console.GetCursorPosition().Left == 0 && Console.GetCursorPosition().Top == 3)
                 {
                     int small_width = (Console.WindowWidth / 10) * 3;
                     int large_width = (Console.WindowWidth / 10) * 4;
                     int end_index = Program.start_index + (Console.WindowHeight - 7);
 
-                    for (int i = Program.start_index; i < end_index; i++)
-                    {
-                        if (i < Program.current_directory.Count)
-                        {
-                            await Draw_Line(i, small_width, large_width);
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+                    await Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
                 }
             }
             
             Console.SetCursorPosition(0, 0);
             Console.CursorVisible = false;
+
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
+
+            return true;
         }
 
 
 
         private static Task<bool> Print_Location_Section(string directory)
         {
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
             string current_label = String.Empty;
 
             lock(directory)
@@ -211,7 +231,12 @@ namespace Sharpfile
                     Console.Write('_');
                 }
             }
-            
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
+
             return Task.FromResult(true);
         }
 
@@ -229,6 +254,10 @@ namespace Sharpfile
             // ctrl + s = file search =====> esc = exit | enter = select file name to search
             // ctrl + c = exit application
 
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
 
             lock (Program.current_input)
             {
@@ -283,6 +312,11 @@ namespace Sharpfile
                 }
             }
 
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
+
             return Task.FromResult(true);
         }
 
@@ -290,23 +324,38 @@ namespace Sharpfile
 
         public static Task<bool> Draw_Line(int i, int small_width, int large_width)
         {
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
+
             current_row_count++;
             int limiter = 0;
 
-            lock(Program.current_directory)
+            ConsoleColor default_background = Console.BackgroundColor;
+
+            lock (Program.current_directory)
             {
-                Tuple<string, string, string, ConsoleColor> tuple = Program.current_directory[i];
+                Tuple<string, string, string, ConsoleColor> tuple = Program.current_directory.ElementAt(i);
+                test_counter++;
 
                 Console.ForegroundColor = Program.Default_Console_Color;
 
                 if (i == Program.current_index)
                 {
+                    Console.BackgroundColor = ConsoleColor.DarkYellow;
+                    Console.ForegroundColor = ConsoleColor.Black;
                     Console.Write(pointer);
                     limiter = pointer.Length;
                 }
+                else
+                {
+                    Console.ForegroundColor = tuple.Item4;
+                }
 
-                Console.ForegroundColor = tuple.Item4;
                 Console.Write(' ');
+
 
                 int count = 0;
 
@@ -347,12 +396,27 @@ namespace Sharpfile
                     Console.Write(' ');
                 }
 
-                Console.ForegroundColor = Program.Default_Console_Color;
+                if (i == Program.current_index)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+                else
+                {
+                    Console.ForegroundColor = Program.Default_Console_Color;
+                }
+
                 Console.Write(separator);
 
 
-
-                Console.ForegroundColor = tuple.Item4;
+                if (i == Program.current_index)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+                else
+                {
+                    Console.ForegroundColor = tuple.Item4;
+                }
+                
                 Console.Write(' ');
                 Console.Write(File_Name_Label);
 
@@ -383,29 +447,54 @@ namespace Sharpfile
                     }
                 }
 
-                Console.ForegroundColor = Program.Default_Console_Color;
+                if (i == Program.current_index)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+                else
+                {
+                    Console.ForegroundColor = Program.Default_Console_Color;
+                }
+                
                 Console.Write(separator);
 
 
-                Console.ForegroundColor = tuple.Item4;
+                if (i == Program.current_index)
+                {
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+                else
+                {
+                    Console.ForegroundColor = tuple.Item4;
+                }
+
                 Console.Write(' ');
                 Console.Write(Type_Label);
 
+                int dot_count = 0;
 
                 for (int ii = 0; ii < small_width - Type_Label.Length - 2; ii++)
                 {
-                    if (tuple.Item3.Length > small_width - limiter - Type_Label.Length - 2)
+                    if (tuple.Item3.Length > small_width - 8 - Type_Label.Length - 2)
                     {
-                        if (ii < small_width - limiter - Type_Label.Length - 5)
+                        if (ii < small_width - 8 - Type_Label.Length - 8)
                         {
-                            if(ii < tuple.Item3.Length)
+                            if(ii < tuple.Item3.Length - 3)
                             {
                                 Console.Write(tuple.Item3[ii]);
                             }
                         }
                         else
                         {
-                            Console.Write('.');
+                            if(dot_count < 3)
+                            {
+                                Console.Write('.');
+                                dot_count++;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                     else
@@ -414,28 +503,38 @@ namespace Sharpfile
                         {
                             Console.Write(tuple.Item3[ii]);
                         }
-                        else
-                        {
-                            Console.Write(' ');
-                        }
                     }
                 }
 
                 Console.ForegroundColor = Program.Default_Console_Color;
-                Console.Write("    ");
+                Console.BackgroundColor = default_background;
+
+                Console.Write(new String(' ', 8));
+
                 Console.Write("\n");
+            }
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
             }
 
             return Task.FromResult(true);
         }
 
 
-        public static async void Print_Current_Directory_Contents(int start_index, int end_index, int small_width, int large_width)
+        public static async Task<bool> Print_Current_Directory_Contents(int start_index, int end_index, int small_width, int large_width)
         {
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
             for (int i = start_index; i < end_index; i++)
             {
                 if (i < Program.current_directory.Count)
                 {
+                    test_total_counter++;
                     await Draw_Line(i, small_width, large_width);
                 }
                 else
@@ -443,14 +542,37 @@ namespace Sharpfile
                     break;
                 }
             }
+            System.Diagnostics.Debug.WriteLine("t: " + test_counter);
+            System.Diagnostics.Debug.WriteLine("T: " + test_counter);
+            System.Diagnostics.Debug.WriteLine("Total: " + test_total_counter * test_counter);
+            test_total_counter = 0;
+            test_counter = 0;
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
+
+            return true;
         }
 
 
         public static async void Location_Selection_Menu(string current_location)
         {
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "true";
+            }
+
             await Print_Location_Section(current_location);
             await Print_Command_Section(current_unit);
             Console.SetCursorPosition(0, 0);
+
+
+            lock (Program.operation_started)
+            {
+                Program.operation_started = "false";
+            }
         }
     }
 }

@@ -30,8 +30,6 @@ namespace Sharpfile
 
         public Task<bool> Open_Current_Directory_In_Terminal()
         {
-            bool result = true;
-
             string path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
@@ -219,14 +217,14 @@ namespace Sharpfile
                 {
                     StringBuilder formated_current_directory_file_name = new StringBuilder(path);
                     formated_current_directory_file_name.Append("\\");
-                    formated_current_directory_file_name.Append(Program.current_directory[i].Item2);
+                    formated_current_directory_file_name.Append(Program.current_directory.ElementAt(i).Item2);
 
                     System.IO.FileInfo pre_formated_current_directory_file_name_file_info = new System.IO.FileInfo(formated_current_directory_file_name.ToString());
                     formated_current_directory_file_name.Clear();
                     formated_current_directory_file_name.Append(pre_formated_current_directory_file_name_file_info.Name);
                     formated_current_directory_file_name.Remove(pre_formated_current_directory_file_name_file_info.Name.Length - pre_formated_current_directory_file_name_file_info.Extension.Length, pre_formated_current_directory_file_name_file_info.Extension.Length);
 
-                    if (Program.current_directory[i].Item2 == file_info.Name)
+                    if (Program.current_directory.ElementAt(Program.current_index).Item2 == file_info.Name)
                     {
                         formated_current_directory_file_name.Clear();
                         Program.current_index = i;
@@ -284,7 +282,7 @@ namespace Sharpfile
         public async Task<bool> Move_Or_Rename_File(string path)
         {
             bool result = false;
-            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
             File.Move(formated_path, path);
             return result;
@@ -293,7 +291,7 @@ namespace Sharpfile
         public async Task<bool> Move_Or_Rename_Directory(string path)
         {
             bool result = false;
-            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory[Program.current_index].Item2) as string);
+            string formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
             Directory.Move(formated_path, path);
             return result;
