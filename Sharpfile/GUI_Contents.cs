@@ -216,8 +216,8 @@ namespace Sharpfile
                     // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
                 }
 
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.BackgroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.BackgroundColor = ConsoleColor.DarkGreen;
 
                 int end = Console.WindowWidth;
 
@@ -299,28 +299,6 @@ namespace Sharpfile
                 lock (Program.Error)
                 {
                     int cursor_left = 0;
-                    Console.SetCursorPosition(0, current_row_count + 3);
-
-                    while (Console.CursorLeft != 0 && Console.CursorTop != current_row_count + 3)
-                    {
-                        // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
-                    }
-
-                    current_unit = unit;
-
-                    if (unit < Console.WindowHeight - 10)
-                    {
-                        int count = (Console.WindowHeight - 10 - unit) + 3;
-
-                        for (int i = 0; i < count; i++)
-                        {
-                            Console.WriteLine(new String(' ', Console.WindowWidth));
-                        }
-                    }
-
-
-
-
                     Console.SetCursorPosition(0, Console.WindowHeight - 4);
 
                     while (Console.CursorLeft != 0 && Console.CursorTop != Console.WindowHeight - 4)
@@ -328,8 +306,8 @@ namespace Sharpfile
                         // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
                     }
 
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.BackgroundColor = ConsoleColor.DarkGray;
+                    Console.BackgroundColor = ConsoleColor.Green;
+                    Console.ForegroundColor = ConsoleColor.Black;
 
                     for (int i = 0; i < Console.BufferWidth; i++)
                     {
@@ -390,7 +368,7 @@ namespace Sharpfile
 
                 if (i == Program.current_index)
                 {
-                    Console.BackgroundColor = ConsoleColor.DarkYellow;
+                    Console.BackgroundColor = ConsoleColor.Green;
                     Console.ForegroundColor = ConsoleColor.Black;
                     Console.Write(pointer);
                     cursor_left += pointer.Length;
@@ -398,6 +376,7 @@ namespace Sharpfile
                 }
                 else
                 {
+                    Console.BackgroundColor = ConsoleColor.Black;
                     Console.ForegroundColor = tuple.Item4;
                 }
 
@@ -579,7 +558,7 @@ namespace Sharpfile
                 Console.Write(new String(' ', Console.WindowWidth - cursor_left));
 
                 Console.ForegroundColor = Program.Default_Console_Color;
-                Console.BackgroundColor = default_background;
+                Console.BackgroundColor = Program.Default_Console_Background_Color;
             }
 
             return Task.FromResult(true);
@@ -589,11 +568,13 @@ namespace Sharpfile
         public static async Task<bool> Print_Current_Directory_Contents(int start_index, int end_index, int small_width, int large_width)
         {
 
+            int cursor_top = 0;
+
             for (int i = start_index; i < end_index; i++)
             {
                 if (i < Program.current_directory.Count)
                 {
-                    test_total_counter++;
+                    cursor_top++;
                     await Draw_Line(i, small_width, large_width);
                 }
                 else
@@ -601,6 +582,16 @@ namespace Sharpfile
                     break;
                 }
             }
+
+            Console.BackgroundColor = ConsoleColor.Black;
+
+            while (cursor_top < Console.WindowHeight - 7)
+            {
+                Console.Write(new String(' ', Console.WindowWidth));
+                cursor_top++;
+            }
+
+            Console.BackgroundColor = Program.Default_Console_Background_Color;
 
             return true;
         }

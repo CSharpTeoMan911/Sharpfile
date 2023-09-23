@@ -65,6 +65,7 @@ namespace Sharpfile
             Console.Clear();
 
             await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+            Thread.Sleep(2000);
 
             System.Timers.Timer size_change_detection_timer = new System.Timers.Timer();
             size_change_detection_timer.Elapsed += Size_change_detection_timer_Elapsed;
@@ -77,7 +78,7 @@ namespace Sharpfile
                 try
                 {
                     Console.CursorVisible = false;
-                    cki = Console.ReadKey(true);
+                     cki = Console.ReadKey(true);
 
                     lock(operation_started)
                     {
@@ -691,7 +692,7 @@ namespace Sharpfile
 
         }
 
-        private static Task<bool> Cursor_Position_Calculator()
+        public static Task<bool> Cursor_Position_Calculator()
         {
             if(cursor_location < 0)
             {
