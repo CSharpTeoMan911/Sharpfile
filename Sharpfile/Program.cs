@@ -414,8 +414,14 @@ namespace Sharpfile
                                     case ConsoleKey.Escape:
                                         current_input.Clear();
                                         current_input.Append("");
+
                                         Location_Selection_Mode = false;
+                                        Directory_Creation_Mode = false;
+                                        Item_Search_Mode = false;
+                                        File_Rename_Mode = false;
+                                        File_Relocation_Mode = false;
                                         Selection_Mode = false;
+
                                         await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
                                         break;
 
