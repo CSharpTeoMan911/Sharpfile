@@ -103,9 +103,14 @@ namespace Sharpfile
                     }
 
                     await Print_Location_Section(dir);
-                    await Print_Current_Directory_Contents(Program.current_index, end_index, small_width, large_width);
+                    await Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
                     await Print_Command_Section();
 
+                    Console.SetCursorPosition(0, 0);
+                    while (Console.CursorLeft != 0 && Console.CursorTop != 0)
+                    {
+                        // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
+                    }
 
                     Console.CursorVisible = false;
                 }

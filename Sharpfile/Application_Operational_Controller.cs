@@ -34,9 +34,11 @@ namespace Sharpfile
             {
                 case Application_Operations.Redraw_Window_And_Load_Window:
                     await Initiate_Operation(Operations.List_Files, String.Empty);
+                    //  await GUI_Contents.Redraw_Screen();
                     await GUI_Contents.Redraw_Screen();
                     break;
                 case Application_Operations.Redraw_Window:
+                    //  await GUI_Contents.Redraw_Screen();
                     await GUI_Contents.Redraw_Screen();
                     break;
                 case Application_Operations.Redraw_File_Unit:

@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Sharpfile.File_Sub_Operations;
 
 namespace Sharpfile
 {
@@ -198,13 +197,15 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
-        public Task<bool> Search_File(string file_name)
+        public async Task<bool> Search_File(string file_name)
         {
             bool result = true;
             System.IO.FileInfo file_info = new System.IO.FileInfo(file_name);
 
             if(file_info.Name.Length > 0)
             {
+                int found_index = -1;
+
                 string path = String.Empty;
                 Program.Directories_Browser.TryPeek(out path);
 
@@ -227,34 +228,38 @@ namespace Sharpfile
                     if (Program.current_directory.ElementAt(Program.current_index).Item2 == file_info.Name)
                     {
                         formated_current_directory_file_name.Clear();
-                        Program.current_index = i;
+                        found_index = i;
                         break;
                     }
                     else if (formated_current_directory_file_name.ToString() == formated_file_name.ToString())
                     {
                         formated_current_directory_file_name.Clear();
-                        Program.current_index = i;
+                        found_index = i;
                         break;
                     }
 
                     formated_current_directory_file_name.Clear();
                 }
 
+                Program.current_index = 0;
+                Program.start_index = 0;
+                Program.cursor_location = 0;
 
-                if (Program.current_index > Console.WindowHeight - 8)
+
+                if (found_index >= 0)
                 {
-                    while (Program.current_index - Program.start_index > Console.WindowHeight - 8)
+                    while (Program.current_index != found_index)
                     {
-                        Program.start_index += Console.WindowHeight - 8;
+                        Program.current_index++;
+                        Program.cursor_location++;
+                        await Program.Cursor_Position_Calculator();
                     }
-
-                    Program.cursor_location = Program.current_index - Program.start_index;
                 }
 
                 formated_file_name.Clear();
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         public Task<bool> Move_Or_Rename_File(string path, bool is_directory)

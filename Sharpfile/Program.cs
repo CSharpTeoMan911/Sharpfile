@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using TextCopy;
@@ -44,10 +45,16 @@ namespace Sharpfile
 
         public static void Main()
         {
+            Init();
+        }
+
+        public static async void Init()
+        {
+            await Load_Application_Modules();
+
             Directories_Browser.Push(Directory.GetCurrentDirectory());
             Console.TreatControlCAsInput = true;
             Console.CursorVisible = false;
-
 
             Current_Buffer_Width = Console.BufferWidth;
             Default_Console_Color = Console.ForegroundColor;
@@ -64,13 +71,14 @@ namespace Sharpfile
             ConsoleKeyInfo cki = new ConsoleKeyInfo();
             Console.Clear();
 
-            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-            Thread.Sleep(2000);
-
             System.Timers.Timer size_change_detection_timer = new System.Timers.Timer();
             size_change_detection_timer.Elapsed += Size_change_detection_timer_Elapsed;
             size_change_detection_timer.Interval = 100;
             size_change_detection_timer.Start();
+
+            Thread.Sleep(2000);
+
+            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
 
             do
             {
@@ -725,6 +733,21 @@ namespace Sharpfile
             {
                 return Task.FromResult(false);
             }
+        }
+
+        private static Task<bool> Load_Application_Modules()
+        {
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            foreach (Assembly assembly in assemblies)
+            {
+                foreach (AssemblyName an in assembly.GetReferencedAssemblies())
+                {
+                    Assembly.Load(an);
+                }
+            }
+
+            return Task.FromResult(true);
         }
 
         ~Program()
