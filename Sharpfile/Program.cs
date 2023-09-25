@@ -736,7 +736,7 @@ namespace Sharpfile
         }
 
 
-        public async static Task<bool> Recalibrate_Indexes()
+        public async static void Recalibrate_Indexes()
         {
             int found_index = Program.current_index;
 
@@ -750,8 +750,6 @@ namespace Sharpfile
                 cursor_location++;
                 await Cursor_Position_Calculator();
             }
-
-            return true;
         }
 
         private static Task<bool> Load_Application_Modules()

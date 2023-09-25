@@ -294,16 +294,7 @@ namespace Sharpfile
                     formated_current_directory_file_name.Clear();
                 }
 
-
-                if (Program.current_index > Console.WindowHeight - 8)
-                {
-                    while (Program.current_index - Program.start_index > Console.WindowHeight - 8)
-                    {
-                        Program.start_index += Console.WindowHeight - 8;
-                    }
-
-                    Program.cursor_location = Program.current_index - Program.start_index;
-                }
+                Program.Recalibrate_Indexes();
 
                 formated_file_name.Clear();
             }

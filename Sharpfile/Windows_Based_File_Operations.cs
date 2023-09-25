@@ -241,7 +241,7 @@ namespace Sharpfile
                     formated_current_directory_file_name.Clear();
                 }
 
-                await Program.Recalibrate_Indexes();
+                Program.Recalibrate_Indexes();
 
                 formated_file_name.Clear();
             }

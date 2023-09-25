@@ -92,7 +92,7 @@ namespace Sharpfile
                     int small_width = (Console.WindowWidth / 10) * 3;
                     int large_width = (Console.WindowWidth / 10) * 4;
 
-                    await Program.Recalibrate_Indexes();
+                    Program.Recalibrate_Indexes();
 
                     int end_index = Program.start_index + (Console.WindowHeight - 7);
 
@@ -160,7 +160,7 @@ namespace Sharpfile
                         int small_width = (Console.WindowWidth / 10) * 3;
                         int large_width = (Console.WindowWidth / 10) * 4;
 
-                        await Program.Recalibrate_Indexes();
+                        Program.Recalibrate_Indexes();
 
                         int end_index = Program.start_index + (Console.WindowHeight - 7);
 
