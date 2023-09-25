@@ -228,33 +228,20 @@ namespace Sharpfile
                     if (Program.current_directory.ElementAt(Program.current_index).Item2 == file_info.Name)
                     {
                         formated_current_directory_file_name.Clear();
-                        found_index = i;
+                        Program.current_index = i;
                         break;
                     }
                     else if (formated_current_directory_file_name.ToString() == formated_file_name.ToString())
                     {
                         formated_current_directory_file_name.Clear();
-                        found_index = i;
+                        Program.current_index = i;
                         break;
                     }
 
                     formated_current_directory_file_name.Clear();
                 }
 
-                Program.current_index = 0;
-                Program.start_index = 0;
-                Program.cursor_location = 0;
-
-
-                if (found_index >= 0)
-                {
-                    while (Program.current_index != found_index)
-                    {
-                        Program.current_index++;
-                        Program.cursor_location++;
-                        await Program.Cursor_Position_Calculator();
-                    }
-                }
+                await Program.Recalibrate_Indexes();
 
                 formated_file_name.Clear();
             }

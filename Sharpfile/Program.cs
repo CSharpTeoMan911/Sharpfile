@@ -735,6 +735,25 @@ namespace Sharpfile
             }
         }
 
+
+        public async static Task<bool> Recalibrate_Indexes()
+        {
+            int found_index = Program.current_index;
+
+            current_index = 0;
+            start_index = 0;
+            cursor_location = 0;
+
+            while (current_index != found_index)
+            {
+                current_index++;
+                cursor_location++;
+                await Cursor_Position_Calculator();
+            }
+
+            return true;
+        }
+
         private static Task<bool> Load_Application_Modules()
         {
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();

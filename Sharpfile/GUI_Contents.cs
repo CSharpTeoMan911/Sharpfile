@@ -91,6 +91,9 @@ namespace Sharpfile
 
                     int small_width = (Console.WindowWidth / 10) * 3;
                     int large_width = (Console.WindowWidth / 10) * 4;
+
+                    await Program.Recalibrate_Indexes();
+
                     int end_index = Program.start_index + (Console.WindowHeight - 7);
 
                     string dir = String.Empty;
@@ -156,6 +159,9 @@ namespace Sharpfile
                     {
                         int small_width = (Console.WindowWidth / 10) * 3;
                         int large_width = (Console.WindowWidth / 10) * 4;
+
+                        await Program.Recalibrate_Indexes();
+
                         int end_index = Program.start_index + (Console.WindowHeight - 7);
 
                         await Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
