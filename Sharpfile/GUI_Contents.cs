@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Sharpfile
 {
-    internal class GUI_Contents
+    internal class GUI_Contents:Extra_Functions
     {
         private static string pointer = " >  ";
         private static string separator = "|";
@@ -23,10 +23,6 @@ namespace Sharpfile
         private static string file_name_label = "   File name: ";
         private static string Input = " Input: ";
 
-        private static int test_counter = 0;
-        private static int test_total_counter = 0;
-
-        private static int previous_input_end_index;
         public static StringBuilder location_line = new StringBuilder();
 
         public static void Main_Menu_GUI()
@@ -96,7 +92,7 @@ namespace Sharpfile
 
                     int end_index = Program.start_index + (Console.WindowHeight - 7);
 
-                    string dir = String.Empty;
+                    string? dir = String.Empty;
                     Program.Directories_Browser.TryPeek(out dir);
 
                     Console.SetCursorPosition(0, 0);
@@ -105,7 +101,7 @@ namespace Sharpfile
                         // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
                     }
 
-                    await Print_Location_Section(dir);
+                    await Print_Location_Section(Null_Check(dir));
                     await Print_Current_Directory_Contents(Program.start_index, end_index, small_width, large_width);
                     await Print_Command_Section();
 
@@ -143,10 +139,10 @@ namespace Sharpfile
                             // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
                         }
 
-                        string dir = String.Empty;
+                        string? dir = String.Empty;
                         Program.Directories_Browser.TryPeek(out dir);
 
-                        await Print_Location_Section(dir);
+                        await Print_Location_Section(Null_Check(dir));
                     }
 
                     Console.SetCursorPosition(0, 3);
@@ -322,7 +318,6 @@ namespace Sharpfile
             lock (Program.current_directory)
             {
                 Tuple<string, string, string, ConsoleColor> tuple = Program.current_directory.ElementAt(i);
-                test_counter++;
 
                 Console.ForegroundColor = Program.Default_Console_Color;
 

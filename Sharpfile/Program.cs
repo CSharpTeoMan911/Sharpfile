@@ -8,7 +8,7 @@ using TextCopy;
 
 namespace Sharpfile
 {
-    class Program
+    class Program:Extra_Functions
     {
 
         public static ConcurrentBag<Tuple<string, string, string, ConsoleColor>> current_directory = new ConcurrentBag<Tuple<string, string, string, ConsoleColor>>();
@@ -67,7 +67,7 @@ namespace Sharpfile
         private static async void Read_Input()
         {
 
-            string location_path = String.Empty;
+            string? location_path = String.Empty;
             ConsoleKeyInfo cki = new ConsoleKeyInfo();
             Console.Clear();
 
@@ -610,9 +610,12 @@ namespace Sharpfile
 
                                     default:
                                         Error = String.Empty;
-                                        lock (selection_buffer)
+                                        if(selection_buffer != null)
                                         {
-                                            selection_buffer += cki.KeyChar;
+                                            lock (selection_buffer)
+                                            {
+                                                selection_buffer += cki.KeyChar;
+                                            }
                                         }
                                         await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
                                         break;

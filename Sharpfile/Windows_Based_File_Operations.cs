@@ -29,7 +29,7 @@ namespace Sharpfile
 
         public Task<bool> Open_Current_Directory_In_Terminal()
         {
-            string path = String.Empty;
+            string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
             Process p = new Process();
@@ -38,7 +38,7 @@ namespace Sharpfile
             {
                 p.StartInfo.UseShellExecute = true;
                 p.StartInfo.FileName = "cmd";
-                p.StartInfo.Arguments = "/k \"cd \"" + path + "\"\"";
+                p.StartInfo.Arguments = "/k \"cd \"" + Null_Check(path) + "\"\"";
                 p.Start();
             }
             catch 
@@ -88,17 +88,17 @@ namespace Sharpfile
         {
             Program.current_directory.Clear();
 
-            string path = String.Empty;
+            string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
-            Program.current_directory_permissions = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, path) as string));
+            Program.current_directory_permissions = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, Null_Check(path)) as string));
 
-            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(path);
+            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Null_Check(path));
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
 
             while (contents_enumerator.MoveNext() == true)
             {
-                Tuple<string, string, string, ConsoleColor> current_file = null;
+                Tuple<string, string, string, ConsoleColor>? current_file = null;
 
                 ConsoleColor current_item_color = Program.Default_Console_Color;
 
@@ -197,16 +197,14 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
-        public async Task<bool> Search_File(string file_name)
+        public Task<bool> Search_File(string file_name)
         {
             bool result = true;
             System.IO.FileInfo file_info = new System.IO.FileInfo(file_name);
 
             if(file_info.Name.Length > 0)
             {
-                int found_index = -1;
-
-                string path = String.Empty;
+                string? path = String.Empty;
                 Program.Directories_Browser.TryPeek(out path);
 
                 StringBuilder formated_file_name = new StringBuilder(file_info.Name);
@@ -216,8 +214,8 @@ namespace Sharpfile
 
                 for (int i = 0; i < Program.current_directory.Count; i++)
                 {
-                    StringBuilder formated_current_directory_file_name = new StringBuilder(path);
-                    formated_current_directory_file_name.Append("\\");
+                    StringBuilder formated_current_directory_file_name = new StringBuilder(Null_Check(path));
+                    formated_current_directory_file_name.Append('\\');
                     formated_current_directory_file_name.Append(Program.current_directory.ElementAt(i).Item2);
 
                     System.IO.FileInfo pre_formated_current_directory_file_name_file_info = new System.IO.FileInfo(formated_current_directory_file_name.ToString());
@@ -246,12 +244,12 @@ namespace Sharpfile
                 formated_file_name.Clear();
             }
 
-            return result;
+            return Task.FromResult(result);
         }
 
         public Task<bool> Move_Or_Rename_File(string path, bool is_directory)
         {
-            string current_path = String.Empty;
+            string? current_path = String.Empty;
             Program.Directories_Browser.TryPeek(out current_path);
 
             if (current_path != null || current_path != String.Empty)
@@ -259,11 +257,11 @@ namespace Sharpfile
                 switch (is_directory)
                 {
                     case true:
-                        System.IO.Directory.Move(current_path, path);
+                        System.IO.Directory.Move(Null_Check(current_path), path);
                         break;
 
                     case false:
-                        System.IO.File.Move(current_path, path);
+                        System.IO.File.Move(Null_Check(current_path), path);
                         break;
                 }
             }

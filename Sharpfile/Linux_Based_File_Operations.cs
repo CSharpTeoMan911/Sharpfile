@@ -33,7 +33,7 @@ namespace Sharpfile
         {
             bool result = false;
 
-            string path = String.Empty;
+            string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
 
@@ -43,7 +43,7 @@ namespace Sharpfile
             {
                 arguments_builder.Clear();
                 arguments_builder.Append("-c \"cd '");
-                arguments_builder.Append(path);
+                arguments_builder.Append(Null_Check(path));
                 arguments_builder.Append("'; \"gnome-terminal;\"");
                 
                 p.StartInfo.FileName = "/bin/bash";
@@ -144,18 +144,18 @@ namespace Sharpfile
         {
             Program.current_directory.Clear();
 
-            string path = String.Empty;
+            string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
-            Program.current_directory_permissions = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, path) as string));
+            Program.current_directory_permissions = Null_Check((await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, Null_Check(path)) as string));
 
-            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(path);
+            IEnumerable<string> contents = System.IO.Directory.EnumerateFileSystemEntries(Null_Check(path));
             IEnumerator<string> contents_enumerator = contents.GetEnumerator();
 
 
             while (contents_enumerator.MoveNext() == true)
             {
-                Tuple<string, string, string, ConsoleColor> current_file = null;
+                Tuple<string, string, string, ConsoleColor>? current_file = null;
 
                 ConsoleColor current_item_color = Program.Default_Console_Color;
 
@@ -259,7 +259,7 @@ namespace Sharpfile
 
             if (file_info.Name.Length > 0)
             {
-                string path = String.Empty;
+                string? path = String.Empty;
                 Program.Directories_Browser.TryPeek(out path);
 
                 StringBuilder formated_file_name = new StringBuilder(file_info.Name);
@@ -269,8 +269,8 @@ namespace Sharpfile
 
                 for (int i = 0; i < Program.current_directory.Count; i++)
                 {
-                    StringBuilder formated_current_directory_file_name = new StringBuilder(path);
-                    formated_current_directory_file_name.Append("/");
+                    StringBuilder formated_current_directory_file_name = new StringBuilder(Null_Check(path));
+                    formated_current_directory_file_name.Append('/');
                     formated_current_directory_file_name.Append(Program.current_directory.ElementAt(i).Item2);
 
                     System.IO.FileInfo pre_formated_current_directory_file_name_file_info = new System.IO.FileInfo(formated_current_directory_file_name.ToString());
@@ -304,7 +304,7 @@ namespace Sharpfile
 
         public Task<bool> Move_Or_Rename_File(string path, bool is_directory)
         {
-            string current_path = String.Empty;
+            string? current_path = String.Empty;
             Program.Directories_Browser.TryPeek(out current_path);
 
             if (current_path != null || current_path != String.Empty)
@@ -312,11 +312,11 @@ namespace Sharpfile
                 switch (is_directory)
                 {
                     case true:
-                        System.IO.Directory.Move(current_path, path);
+                        System.IO.Directory.Move(Null_Check(current_path), path);
                         break;
 
                     case false:
-                        System.IO.File.Move(current_path, path);
+                        System.IO.File.Move(Null_Check(current_path), path);
                         break;
                 }
             }

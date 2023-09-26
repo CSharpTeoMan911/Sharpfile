@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Sharpfile
 {
-    internal class File_Sub_Operations
+    internal class File_Sub_Operations:Extra_Functions
     {
         public enum Sub_Operations
         {
@@ -281,8 +281,9 @@ namespace Sharpfile
 
         private static Task<bool> Get_If_Path_Is_File_Or_Directory(string current_item_path)
         {
-            bool is_directory = false;
+            current_item_path = System.IO.Path.GetFullPath(current_item_path);
 
+            bool is_directory = false;
 
             try
             {
@@ -307,29 +308,23 @@ namespace Sharpfile
 
         private static Task<string> File_Path_Generator(string file)
         {
-            string path = String.Empty;
+            string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
 
-            StringBuilder formated_path = new StringBuilder(path);
+            StringBuilder formated_path = new StringBuilder(Null_Check(path));
 
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                if (formated_path[formated_path.Length - 1] != '/')
-                {
-                    formated_path.Append("/");
-                }
+                formated_path.Append('/');
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                if (formated_path[formated_path.Length - 1] != '/')
-                {
-                    formated_path.Append("\\");
-                }
+                formated_path.Append('\\');
             }
 
             formated_path.Append(file);
 
-            return Task.FromResult(formated_path.ToString());
+            return Task.FromResult(System.IO.Path.GetFullPath(formated_path.ToString()));
         }
 
 
@@ -339,16 +334,16 @@ namespace Sharpfile
 
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                formated_path.Append("/");
+                formated_path.Append('/');
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                formated_path.Append("\\");
+                formated_path.Append('\\');
             }
 
             formated_path.Append(item);
 
-            return Task.FromResult(formated_path.ToString());
+            return Task.FromResult(System.IO.Path.GetFullPath(formated_path.ToString()));
         }
 
         private static Task<string> Random_File_Name_Generator(string? path)
@@ -364,11 +359,11 @@ namespace Sharpfile
 
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
             {
-                formated_path.Append("/");
+                formated_path.Append('/');
             }
             else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
             {
-                formated_path.Append("\\");
+                formated_path.Append('\\');
             }
 
             formated_path.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
@@ -404,11 +399,6 @@ namespace Sharpfile
             }
 
             return Task.FromResult(formated_path.ToString());
-        }
-
-        protected static string Null_Check(string? result)
-        {
-            return result == null ? String.Empty : result;
         }
     }
 }

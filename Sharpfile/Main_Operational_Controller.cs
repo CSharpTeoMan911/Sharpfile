@@ -28,7 +28,7 @@ namespace Sharpfile
 
         protected static async Task<bool> Initiate_Operation(Operations operation, string operation_content)
         {
-            OS_Independent_Operations current_operation = null;
+            OS_Independent_Operations? current_operation = null;
 
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
             {
