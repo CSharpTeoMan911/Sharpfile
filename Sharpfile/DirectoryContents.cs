@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Sharpfile
     internal class DirectoryContents
     {
         public string DirectoryPath = String.Empty;
-        public List<string> FilePaths = new List<string>();
-        public List<DirectoryContents> DirectoriesPaths = new List<DirectoryContents>();
+        public ConcurrentBag<string> FilePaths = new ConcurrentBag<string>();
+        public ConcurrentBag<DirectoryContents> DirectoriesPaths = new ConcurrentBag<DirectoryContents>();
     }
 }

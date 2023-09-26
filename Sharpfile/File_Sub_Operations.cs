@@ -17,7 +17,9 @@ namespace Sharpfile
             File_Path_Generation,
             Custom_File_Path_Generation,
             Terminator_Formater,
-            Random_File_Name_Generator
+            Random_File_Name_Generator,
+            Random_Directory_Name_Generator,
+            Path_Separator_Generator
         }
 
 
@@ -48,6 +50,12 @@ namespace Sharpfile
                     break;
                 case Sub_Operations.Random_File_Name_Generator:
                     result = await Random_File_Name_Generator(path);
+                    break;
+                case Sub_Operations.Random_Directory_Name_Generator:
+                    result = await Random_Directory_Name_Generator(path);
+                    break;
+                case Sub_Operations.Path_Separator_Generator:
+                    result = OS_Platform_Independent_Separator();
                     break;
             }
             return result;
@@ -313,14 +321,7 @@ namespace Sharpfile
 
             StringBuilder formated_path = new StringBuilder(Null_Check(path));
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-            {
-                formated_path.Append('/');
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                formated_path.Append('\\');
-            }
+            formated_path.Append(OS_Platform_Independent_Separator());
 
             formated_path.Append(file);
 
@@ -332,14 +333,7 @@ namespace Sharpfile
         {
             StringBuilder formated_path = new StringBuilder(source_path);
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-            {
-                formated_path.Append('/');
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                formated_path.Append('\\');
-            }
+            formated_path.Append(OS_Platform_Independent_Separator());
 
             formated_path.Append(item);
 
@@ -356,17 +350,6 @@ namespace Sharpfile
         Recursion:
             formated_path.Clear();
             formated_path.Append(path);
-
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-            {
-                formated_path.Append('/');
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                formated_path.Append('\\');
-            }
-
-            formated_path.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
             formated_path.Append("_Copy");
             formated_path.Append(copy_num);
 
@@ -379,26 +362,39 @@ namespace Sharpfile
             return Task.FromResult(formated_path.ToString());
         }
 
-        private static Task<string> Terminator_Formater(string? path)
+        private static Task<string> Random_Directory_Name_Generator(string? path)
         {
-            StringBuilder formated_path = new StringBuilder(path);
+            int copy_num = 0;
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            StringBuilder formated_path = new StringBuilder();
+
+
+        Recursion:
+            formated_path.Clear();
+            formated_path.Append(path);
+            formated_path.Append("_Copy");
+            formated_path.Append(copy_num);
+
+            if (System.IO.Directory.Exists(formated_path.ToString()) == true)
             {
-                if (formated_path[formated_path.Length -1] == '/')
-                {
-                    formated_path.Remove(formated_path.Length - 1, 1);
-                }
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                if (formated_path[formated_path.Length - 1] == '\\')
-                {
-                    formated_path.Remove(formated_path.Length - 1, 1);
-                }
+                copy_num++;
+                goto Recursion;
             }
 
             return Task.FromResult(formated_path.ToString());
+        }
+
+
+        private static string OS_Platform_Independent_Separator()
+        {
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                return "\\";
+            }
+            else
+            { 
+                return "/";
+            }
         }
     }
 }

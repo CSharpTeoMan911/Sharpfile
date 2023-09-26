@@ -45,6 +45,7 @@ namespace Sharpfile
 
         public static void Main()
         {
+            //DirectoryManipulation.CopyDirectory("C:\\Users\\Teodor Mihail\\Desktop\\Desktop", "C:\\Users\\Teodor Mihail\\Desktop\\Desktop");
             Init();
         }
 
@@ -685,89 +686,6 @@ namespace Sharpfile
                 }
                 Execute();
             }
-        }
-
-        private static void Empty_STDIN_Buffered_Stream()
-        {   
-            if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                while (Console.KeyAvailable)
-                {
-                    Console.ReadKey(true);
-                }
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-            {
-                if(Selection_Mode == false)
-                {
-                    while (Console.KeyAvailable)
-                    {
-                        Console.ReadKey(true);
-                    }
-                }
-            }
-
-        }
-
-        public static Task<bool> Cursor_Position_Calculator()
-        {
-            if(cursor_location < 0)
-            {
-                cursor_location = Console.WindowHeight - 8;
-                int calculated_value = current_index - cursor_location;
-                switch (calculated_value >= 0)
-                {
-                    case true:
-                        start_index = calculated_value;
-                        break;
-                    case false:
-                        start_index = 0;
-                        break;
-                }
-                return Task.FromResult(true);
-            }
-            else if(cursor_location > Console.WindowHeight - 8)
-            {
-                cursor_location = 0;
-                start_index = current_index;
-                return Task.FromResult(true);
-            }
-            else
-            {
-                return Task.FromResult(false);
-            }
-        }
-
-
-        public async static void Recalibrate_Indexes()
-        {
-            int found_index = Program.current_index;
-
-            current_index = 0;
-            start_index = 0;
-            cursor_location = 0;
-
-            while (current_index != found_index)
-            {
-                current_index++;
-                cursor_location++;
-                await Cursor_Position_Calculator();
-            }
-        }
-
-        private static Task<bool> Load_Application_Modules()
-        {
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            foreach (Assembly assembly in assemblies)
-            {
-                foreach (AssemblyName an in assembly.GetReferencedAssemblies())
-                {
-                    Assembly.Load(an);
-                }
-            }
-
-            return Task.FromResult(true);
         }
 
         ~Program()

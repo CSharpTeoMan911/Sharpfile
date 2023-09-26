@@ -289,12 +289,15 @@ namespace Sharpfile
 
         public Task<bool> Copy_File(string path)
         {
+            System.IO.File.Copy("", path);
             throw new NotImplementedException();
         }
 
         public Task<bool> Copy_Directory(string path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            DirectoryManipulation.CopyDirectory("C:\\Users\\Teodor Mihail\\Desktop\\Desktop", "C:\\Users\\Teodor Mihail\\Desktop\\Desktop");
+            return Task.FromResult(result);
         }
     }
 }

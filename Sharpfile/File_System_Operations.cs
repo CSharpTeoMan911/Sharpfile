@@ -21,8 +21,8 @@ namespace Sharpfile
         ////////////////////////////////////////////
 
 
-        public Task<bool> Move_Or_Rename_File(string path); // TO BE DONE;
-        public Task<bool> Move_Or_Rename_Directory(string path); // TO BE DONE;
+        public Task<bool> Move_Or_Rename_File(string path); // DONE
+        public Task<bool> Move_Or_Rename_Directory(string path); // DONE
         public Task<bool> Copy_File(string path); // TO BE DONE;
         public Task<bool> Copy_Directory(string path); // TO BE DONE;
         public Task<bool> List_Files(); // DONE
