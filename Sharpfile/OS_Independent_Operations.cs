@@ -92,14 +92,18 @@ namespace Sharpfile
             return operation_result;
         }
 
-        public Task<bool> Copy_File(string path)
+        public async Task<bool> Copy_File(string path)
         {
-            throw new NotImplementedException();
+            bool operation_result = false;
+            operation_result = await file_system_operations.Copy_File(path);
+            return operation_result;
         }
 
-        public Task<bool> Copy_Directory(string path)
+        public async Task<bool> Copy_Directory(string path)
         {
-            throw new NotImplementedException();
+            bool operation_result = false;
+            operation_result = await file_system_operations.Copy_Directory(path);
+            return operation_result;
         }
     }
 }

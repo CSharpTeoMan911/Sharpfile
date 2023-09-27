@@ -342,14 +342,64 @@ namespace Sharpfile
             return result;
         }
 
-        public Task<bool> Copy_File(string path)
+        public async Task<bool> Copy_File(string path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            string? current_directory = String.Empty;
+            Program.Directories_Browser.TryPeek(out current_directory);
+
+            if (current_directory != null)
+            {
+                StringBuilder path_builder = new StringBuilder();
+                path_builder.Append(current_directory);
+                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+
+                string formated_source_path = Path.GetFullPath(path_builder.ToString());
+
+
+                path_builder.Clear();
+                path_builder.Append(path);
+                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+                string formated_destination_path = Null_Check((await Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
+
+                File.Copy(formated_source_path, formated_destination_path);
+
+                path_builder.Clear();
+            }
+
+            return result;
         }
 
-        public Task<bool> Copy_Directory(string path)
+        public async Task<bool> Copy_Directory(string path)
         {
-            throw new NotImplementedException();
+            bool result = false;
+
+            string? current_directory = String.Empty;
+            Program.Directories_Browser.TryPeek(out current_directory);
+
+            StringBuilder path_builder = new StringBuilder(current_directory);
+            path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+            path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+            string formated_source_path = Path.GetFullPath(path_builder.ToString());
+
+            path_builder.Clear();
+            path_builder.Append(path);
+            path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+            path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+            string formated_destination_path = Null_Check((await Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
+
+            await DirectoryManipulation.CopyDirectory(formated_source_path, formated_destination_path);
+
+            path_builder.Clear();
+
+            return result;
         }
     }
 }

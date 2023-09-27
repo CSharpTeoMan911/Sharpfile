@@ -85,6 +85,7 @@ namespace Sharpfile
             return Task.FromResult(result);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         private static Task<string> Get_File_Extension(string path)
         {
             string result = String.Empty;
@@ -97,9 +98,24 @@ namespace Sharpfile
             {
                 result = System.IO.Path.GetExtension(path);
 
-                if(result == String.Empty)
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
                 {
-                    result = "bin";
+                    if(result == String.Empty)
+                    {
+                        string file_mode = System.IO.File.GetUnixFileMode(path).ToString();
+
+                        if ((file_mode.Contains("UserExecute") == true))
+                        {
+                            result = "bin";
+                        }
+                    }
+                }
+                else if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
+                {
+                    if (result == String.Empty || result == ".exe")
+                    {
+                        result = "bin";
+                    }
                 }
             }
             return Task.FromResult(result);
@@ -289,25 +305,27 @@ namespace Sharpfile
 
         private static Task<bool> Get_If_Path_Is_File_Or_Directory(string current_item_path)
         {
-            current_item_path = System.IO.Path.GetFullPath(current_item_path);
-
             bool is_directory = false;
 
             try
             {
-                if (Directory.Exists(current_item_path))
+                try
                 {
-                    is_directory = true;
+                    if (Directory.Exists(current_item_path))
+                    {
+                        is_directory = true;
+                    }
                 }
-            }
-            catch { }
+                catch { }
 
-            try
-            {
-                if (File.Exists(current_item_path))
+                try
                 {
-                    is_directory = false;
+                    if (File.Exists(current_item_path))
+                    {
+                        is_directory = false;
+                    }
                 }
+                catch { }
             }
             catch { }
 
@@ -320,9 +338,7 @@ namespace Sharpfile
             Program.Directories_Browser.TryPeek(out path);
 
             StringBuilder formated_path = new StringBuilder(Null_Check(path));
-
             formated_path.Append(OS_Platform_Independent_Separator());
-
             formated_path.Append(file);
 
             return Task.FromResult(System.IO.Path.GetFullPath(formated_path.ToString()));

@@ -109,23 +109,16 @@ namespace Sharpfile
                 string file_permissions = Null_Check(await Sub_Operations_Controller(Sub_Operations.Get_File_Permissions, contents_enumerator.Current) as string);
 
 
-                switch (System.IO.Directory.Exists(contents_enumerator.Current))
+                switch (extension_type)
                 {
-                    case true:
+                    case "dir":
                         current_item_color = ConsoleColor.Blue;
                         break;
-
-                    case false:
-                        switch (extension_type == ".exe")
-                        {
-                            case true:
-                                current_item_color = ConsoleColor.Yellow;
-                                break;
-
-                            case false:
-                                current_item_color = ConsoleColor.Green;
-                                break;
-                        }
+                    case "bin":
+                        current_item_color = ConsoleColor.Yellow;
+                        break;
+                    default:
+                        current_item_color = ConsoleColor.Green;
                         break;
                 }
 
@@ -287,17 +280,64 @@ namespace Sharpfile
             return result;
         }
 
-        public Task<bool> Copy_File(string path)
-        {
-            System.IO.File.Copy("", path);
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> Copy_Directory(string path)
+        public async Task<bool> Copy_File(string path)
         {
             bool result = false;
-            DirectoryManipulation.CopyDirectory("C:\\Users\\Teodor Mihail\\Desktop\\Desktop", "C:\\Users\\Teodor Mihail\\Desktop\\Desktop");
-            return Task.FromResult(result);
+
+            string? current_directory = String.Empty;
+            Program.Directories_Browser.TryPeek(out current_directory);
+
+            if(current_directory != null)
+            {
+                StringBuilder path_builder = new StringBuilder();
+                path_builder.Append(current_directory);
+                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+
+                string formated_source_path = Path.GetFullPath(path_builder.ToString());
+
+
+                path_builder.Clear();
+                path_builder.Append(path);
+                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+                string formated_destination_path = Null_Check((await Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
+
+                File.Copy(formated_source_path, formated_destination_path);
+
+                path_builder.Clear();
+            }
+
+            return result;
+        }
+
+        public async Task<bool> Copy_Directory(string path)
+        {
+            bool result = false;
+
+            string? current_directory = String.Empty;
+            Program.Directories_Browser.TryPeek(out current_directory);
+
+            StringBuilder path_builder = new StringBuilder(current_directory);
+            path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+            path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+            string formated_source_path = Path.GetFullPath(path_builder.ToString());
+
+            path_builder.Clear();
+            path_builder.Append(path);
+            path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+            path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+
+            string formated_destination_path = Null_Check((await Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
+
+            await DirectoryManipulation.CopyDirectory(formated_source_path, formated_destination_path);
+
+            path_builder.Clear();
+
+            return result;
         }
     }
 }

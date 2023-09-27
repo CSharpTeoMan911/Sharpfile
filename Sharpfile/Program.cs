@@ -39,6 +39,7 @@ namespace Sharpfile
         public static bool Item_Search_Mode = false;
         public static bool File_Rename_Mode = false;
         public static bool File_Relocation_Mode = false;
+        public static bool File_Copy_Mode = false;
 
         public static string Error = String.Empty;
 
@@ -198,10 +199,30 @@ namespace Sharpfile
                                             }
                                             else
                                             {
+                                                Error = String.Empty;
+
                                                 current_input.Clear();
-                                                current_input.Append("");
+                                                current_input.Append(" FILE COPY ( PRESS 'Esc' TO EXIT )");
+
+                                                System.Diagnostics.Debug.WriteLine(current_input.ToString());
+
+                                                Selection_Mode = true;
+                                                File_Copy_Mode = true;
+
+                                                location_path = String.Empty;
+                                                Directories_Browser.TryPeek(out location_path);
+
+                                                if (selection_buffer != null)
+                                                {
+                                                    lock (selection_buffer)
+                                                    {
+                                                        selection_buffer = location_path;
+                                                    }
+                                                }
                                             }
                                         }
+
+                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
                                         break;
                                     case ConsoleKey.R:
 
@@ -429,6 +450,7 @@ namespace Sharpfile
                                         Item_Search_Mode = false;
                                         File_Rename_Mode = false;
                                         File_Relocation_Mode = false;
+                                        File_Copy_Mode = false;
                                         Selection_Mode = false;
 
                                         await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
@@ -606,6 +628,21 @@ namespace Sharpfile
                                             }
 
                                             await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
+                                        }
+                                        else if(File_Copy_Mode == true)
+                                        {
+                                            lock (Error)
+                                            {
+                                                Error = String.Empty;
+
+                                                current_input.Clear();
+                                                current_input.Append("");
+
+                                                File_Copy_Mode = false;
+                                                Selection_Mode = false;
+                                            }
+
+                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Copy_File);
                                         }
                                         break;
 

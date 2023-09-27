@@ -12,27 +12,14 @@ namespace Sharpfile
 {
     internal class DirectoryManipulation:File_Sub_Operations
     {
-        public static async void CopyDirectory(string source_path, string destination_path)
+        public static async Task<bool> CopyDirectory(string source_path, string destination_path)
         {
             DirectoryContents source_directory_contents = new DirectoryContents();
             await GetDirectoryContents(source_directory_contents, source_path);
 
-            DirectoryInfo directoryInfo = new DirectoryInfo(source_directory_contents.DirectoryPath);
+            await SetDirectoryContents(source_directory_contents, destination_path);
 
-            StringBuilder path_builder = new StringBuilder(destination_path);
-            path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
-            path_builder.Append(directoryInfo.Name);
-
-            Stopwatch s = new Stopwatch();
-
-            s.Start();
-            await SetDirectoryContents(source_directory_contents, Null_Check((await Sub_Operations_Controller(Sub_Operations.Random_Directory_Name_Generator, path_builder.ToString()) as string)));
-            s.Stop();
-
-            path_builder.Clear();
-            System.Diagnostics.Debug.WriteLine("\n\n!!! FINISHED !!!");
-            System.Diagnostics.Debug.WriteLine("Elapsed milliseconds: " + s.ElapsedMilliseconds);
-            System.Diagnostics.Debug.WriteLine("\n\n!!! FINISHED !!!");
+            return true;
         }
 
         

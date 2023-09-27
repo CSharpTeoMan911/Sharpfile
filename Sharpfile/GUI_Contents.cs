@@ -279,6 +279,7 @@ namespace Sharpfile
 
                     string current_input = Program.current_input.ToString();
 
+
                     Console.Write(Input + current_input);
                     cursor_left += Input.Length + current_input.Length;
                     
