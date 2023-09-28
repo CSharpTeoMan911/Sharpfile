@@ -241,7 +241,13 @@ namespace Sharpfile
                     }
                 }
 
-                Console.Write(new String(' ', Console.WindowWidth - current_label.Length - cursor_left - 6));
+                int width = Console.WindowWidth - current_label.Length - cursor_left - 6;
+
+                if(width > 0)
+                {
+                    Console.Write(new String(' ', width));
+                }
+
                 Console.Write(new String(' ', Console.WindowWidth + 3));
 
                 Console.ForegroundColor = Program.Default_Console_Color;
@@ -294,8 +300,13 @@ namespace Sharpfile
                         cursor_left += Program.Error.Length + 2;
                     }
 
+                    int width = Console.WindowWidth - cursor_left;
 
-                    Console.Write(new String(' ', Console.WindowWidth - cursor_left));
+                    if(width > 0)
+                    {
+                        Console.Write(new String(' ', Console.WindowWidth - cursor_left));
+                    }
+
                     Console.Write(new String(' ', Console.WindowWidth));
                     Console.Write(new String(' ', Console.WindowWidth));
 
