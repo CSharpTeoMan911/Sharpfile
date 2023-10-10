@@ -46,7 +46,6 @@ namespace Sharpfile
 
         public static void Main()
         {
-            //DirectoryManipulation.CopyDirectory("C:\\Users\\Teodor Mihail\\Desktop\\Desktop", "C:\\Users\\Teodor Mihail\\Desktop\\Desktop");
             Init();
         }
 
@@ -75,7 +74,7 @@ namespace Sharpfile
 
             System.Timers.Timer size_change_detection_timer = new System.Timers.Timer();
             size_change_detection_timer.Elapsed += Size_change_detection_timer_Elapsed;
-            size_change_detection_timer.Interval = 100;
+            size_change_detection_timer.Interval = 1;
             size_change_detection_timer.Start();
 
             Thread.Sleep(2000);
@@ -84,11 +83,10 @@ namespace Sharpfile
 
             do
             {
-
                 try
                 {
                     Console.CursorVisible = false;
-                     cki = Console.ReadKey(true);
+                    cki = Console.ReadKey(true);
 
                     lock(operation_started)
                     {

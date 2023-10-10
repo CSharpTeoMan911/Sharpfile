@@ -58,19 +58,21 @@ namespace Sharpfile
                     break;
                 case Application_Operations.Open_Files:
                     formated_path = Null_Check(await Sub_Operations_Controller( Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
-                    switch (Program.current_directory.ElementAt(Program.current_index).Item3 == "dir")
-                    {
-                        case true:
-                            Program.current_index= 0;
-                            Program.cursor_location = 0;
-                            await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
-                            await GUI_Contents.Redraw_Screen();
-                            break;
-                        case false:
-                            await Initiate_Operation(Operations.Open_File, formated_path);
-                            await GUI_Contents.Redraw_Screen();
-                            break;
-                    }
+
+                    if(Initiate_State(formated_path, Operation_States.File_Open_Initiated) == true)
+                        switch (Program.current_directory.ElementAt(Program.current_index).Item3 == "dir")
+                        {
+                            case true:
+                                Program.current_index = 0;
+                                Program.cursor_location = 0;
+                                await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
+                                await GUI_Contents.Redraw_Screen();
+                                break;
+                            case false:
+                                await Initiate_Operation(Operations.Open_File, formated_path);
+                                await GUI_Contents.Redraw_Screen();
+                                break;
+                        }
                     break;
                 case Application_Operations.Navigate_To_Directory:
                     string? path = String.Empty;
@@ -80,7 +82,9 @@ namespace Sharpfile
                     {
                         Program.current_index = 0;
                         Program.cursor_location = 0;
-                        await Initiate_Operation(Operations.Navigate_To_Directory, System.IO.Path.GetFullPath(Null_Check(Program.selection_buffer)));
+
+                        if (Initiate_State(Null_Check(Program.selection_buffer), Operation_States.Directory_Navigation_Initiated) == true)
+                            await Initiate_Operation(Operations.Navigate_To_Directory, System.IO.Path.GetFullPath(Null_Check(Program.selection_buffer)));
                     }
                     break;
                 case Application_Operations.Change_Location:
@@ -93,8 +97,9 @@ namespace Sharpfile
                     }
                     break;
                 case Application_Operations.Go_Back:
-                    await Initiate_Operation(Operations.Navigate_To_Previous_Directory, String.Empty);
-                    await GUI_Contents.Redraw_Screen();
+                    if (Initiate_State(Program.Directories_Browser.ElementAt(Program.Directories_Browser.Count - 2), Operation_States.Directory_Navigation_Initiated) == true)
+                        await Initiate_Operation(Operations.Navigate_To_Previous_Directory, String.Empty);
+                        await GUI_Contents.Redraw_Screen();
                     break;
                 case Application_Operations.Create_Directory:
                     formated_path = Null_Check(await Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Null_Check(Program.selection_buffer)) as string);

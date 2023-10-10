@@ -177,15 +177,12 @@ namespace Sharpfile
 
                             AuthorizationRuleCollection rules = directory_security.GetAccessRules(true, true, typeof(NTAccount));
 
-                            //Go through the rules returned from the DirectorySecurity
                             foreach (AuthorizationRule rule in rules)
                             {
-                                //If we find one that matches the identity we are looking for
                                 if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
                                 {
                                     var filesystemAccessRule = (FileSystemAccessRule)rule;
 
-                                    //Cast to a FileSystemAccessRule to check for access rights
                                     if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && (filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData)  > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
                                     {
                                         file_permissions = "rw";
@@ -211,15 +208,12 @@ namespace Sharpfile
 
                             AuthorizationRuleCollection rules = file_security.GetAccessRules(true, true, typeof(NTAccount));
 
-                            //Go through the rules returned from the DirectorySecurity
                             foreach (AuthorizationRule rule in rules)
                             {
-                                //If we find one that matches the identity we are looking for
                                 if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
                                 {
                                     var filesystemAccessRule = (FileSystemAccessRule)rule;
 
-                                    //Cast to a FileSystemAccessRule to check for access rights
                                     if ((filesystemAccessRule.FileSystemRights & FileSystemRights.ReadData) > 0 && (filesystemAccessRule.FileSystemRights & FileSystemRights.WriteData)  > 0 && filesystemAccessRule.AccessControlType != AccessControlType.Deny)
                                     {
                                         file_permissions = "rw";
