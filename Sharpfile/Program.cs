@@ -4,17 +4,25 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Tasks;
 using TextCopy;
 
 namespace Sharpfile
 {
     class Program:Extra_Functions
     {
+        private static DateTime last_change = DateTime.Now;
+
+
+        private static bool enable_execute = false;
+
+        public static List<Func<Task>> controller_gui_operations = new List<Func<Task>>();
+        public static ConcurrentQueue<Task> controller_operations = new ConcurrentQueue<Task>();
+
 
         public static ConcurrentBag<Tuple<string, string, string, ConsoleColor>> current_directory = new ConcurrentBag<Tuple<string, string, string, ConsoleColor>>();
         public static string current_directory_permissions = "__";
 
-        public static string operation_started = "false";
 
         public static int current_index = 0;
         public static int cursor_location = 0;
@@ -46,12 +54,7 @@ namespace Sharpfile
 
         public static void Main()
         {
-            Init();
-        }
-
-        public static async void Init()
-        {
-            await Load_Application_Modules();
+            Load_Application_Modules();
 
             Directories_Browser.Push(Directory.GetCurrentDirectory());
             Console.TreatControlCAsInput = true;
@@ -60,216 +63,415 @@ namespace Sharpfile
             Current_Buffer_Width = Console.BufferWidth;
             Default_Console_Color = Console.ForegroundColor;
 
-            Thread input_thread = new Thread(Read_Input);
-            input_thread.Priority = ThreadPriority.Highest;
-            input_thread.Start();
+            Read_Input().Wait();
         }
 
-        private static async void Read_Input()
+        private static async Task Read_Input()
         {
+            Action? action;
 
             string? location_path = String.Empty;
             ConsoleKeyInfo cki = new ConsoleKeyInfo();
-            Console.Clear();
-
-            System.Timers.Timer size_change_detection_timer = new System.Timers.Timer();
-            size_change_detection_timer.Elapsed += Size_change_detection_timer_Elapsed;
-            size_change_detection_timer.Interval = 1;
-            size_change_detection_timer.Start();
-
-            Thread.Sleep(2000);
 
             await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
 
-            do
+            System.Timers.Timer gui_management = new System.Timers.Timer();
+            gui_management.Interval = 1;
+            gui_management.Elapsed += Gui_management_Elapsed;
+            gui_management.Start();
+
+            System.Timers.Timer size_management = new System.Timers.Timer();
+            size_management.Interval = 1;
+            size_management.Elapsed += Size_change_detection;
+            size_management.Start();
+
+            while (true)
             {
-                try
+                Console.CursorVisible = false;
+                cki = Console.ReadKey(true);
+
+                if (enable_execute)
                 {
-                    Console.CursorVisible = false;
-                    cki = Console.ReadKey(true);
-
-                    lock(operation_started)
+                    try
                     {
-                        async void Execute()
+                        if (Selection_Mode == false)
                         {
-                            if (Selection_Mode == false)
+                            switch (cki.Key)
                             {
-                                switch (cki.Key)
-                                {
-                                    case ConsoleKey.UpArrow:
-                                        if (current_input.ToString() != String.Empty)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                                current_input.Clear();
-                                                current_input.Append(String.Empty);
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        }
-
-                                        if (current_index > 0)
-                                        {
-                                            current_index--;
-                                            cursor_location--;
-                                        }
-
-                                        switch(await Cursor_Position_Calculator())
-                                        {
-                                            case true:
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                                                break;
-                                            case false:
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
-                                                break;
-                                        }
-                                        break;
-                                    case ConsoleKey.DownArrow:
-                                        if (current_input.ToString() != String.Empty)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                                current_input.Clear();
-                                                current_input.Append(String.Empty);
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        }
-
-                                        if (current_index < current_directory.Count - 1)
-                                        {
-                                            current_index++;
-                                            cursor_location++;
-                                        }
-
-                                        switch (await Cursor_Position_Calculator())
-                                        {
-                                            case true:
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                                                break;
-                                            case false:
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit);
-                                                break;
-                                        }
-                                        break;
-                                    case ConsoleKey.O:
+                                case ConsoleKey.UpArrow:
+                                    if (current_input.ToString() != String.Empty)
+                                    {
                                         lock (Error)
                                         {
                                             Error = String.Empty;
                                             current_input.Clear();
-                                            current_input.Append(" OPEN FILE");
+                                            current_input.Append(String.Empty);
                                         }
 
-                                        if (current_directory.ElementAt(current_index).Item1[0] == 'r')
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+
+                                    if (current_index > 0)
+                                    {
+                                        current_index--;
+                                        cursor_location--;
+                                    }
+
+                                    lock (controller_gui_operations)
+                                    {
+                                        switch (Cursor_Position_Calculator())
                                         {
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
+                                            case true:
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window));
+                                                break;
+                                            case false:
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit));
+                                                break;
+                                        }
+                                    }
+                                    break;
+                                case ConsoleKey.DownArrow:
+                                    if (current_input.ToString() != String.Empty)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+                                            current_input.Clear();
+                                            current_input.Append(String.Empty);
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+
+                                    if (current_index < current_directory.Count - 1)
+                                    {
+                                        current_index++;
+                                        cursor_location++;
+                                    }
+
+                                    lock (controller_gui_operations)
+                                    {
+                                        switch (Cursor_Position_Calculator())
+                                        {
+                                            case true:
+
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window));
+                                                break;
+                                            case false:
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_File_Unit));
+                                                break;
+                                        }
+                                    }
+                                    break;
+                                case ConsoleKey.O:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+                                        current_input.Clear();
+                                        current_input.Append(" OPEN FILE");
+                                    }
+
+                                    if (current_directory.ElementAt(current_index).Item1[0] == 'r')
+                                    {
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
+                                        action.Invoke();
+                                    }
+                                    else
+                                    {
+                                        Error = "[ Error: No permissions to open the file ]";
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+                                    break;
+
+                                case ConsoleKey.RightArrow:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+                                        current_input.Clear();
+                                        current_input.Append(" OPEN FILE");
+                                    }
+
+                                    if (current_directory.ElementAt(current_index).Item1[0] == 'r')
+                                    {
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Open_Files);
+                                        action.Invoke();
+                                    }
+                                    else
+                                    {
+                                        Error = "[ Error: No permissions to open the file ]";
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+                                    break;
+
+                                case ConsoleKey.B:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+                                        current_input.Clear();
+                                        current_input.Append(" GO BACK");
+                                    }
+
+                                    current_index = 0;
+                                    cursor_location = 0;
+                                    start_index = 0;
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                                    action.Invoke();
+
+                                    break;
+
+                                case ConsoleKey.LeftArrow:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+                                        current_input.Clear();
+                                        current_input.Append(" GO BACK");
+                                    }
+
+                                    current_index = 0;
+                                    cursor_location = 0;
+                                    start_index = 0;
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                                    action.Invoke();
+
+                                    break;
+
+                                case ConsoleKey.C:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+                                        if (cki.Modifiers == (ConsoleModifiers.Control))
+                                        {
+                                            //action = async () => await GUI_Contents.Clear_Console();
+                                            //action.Invoke();
+
+                                            Console.CursorVisible = true;
+                                            System.Environment.Exit(0);
                                         }
                                         else
                                         {
-                                            Error = "[ Error: No permissions to open the file ]";
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        }
-                                        break;
-                                    case ConsoleKey.B:
-                                        lock (Error)
-                                        {
                                             Error = String.Empty;
+
                                             current_input.Clear();
-                                            current_input.Append(" GO BACK");
-                                        }
+                                            current_input.Append(" FILE COPY ( PRESS 'Esc' TO EXIT )");
 
-                                        current_index = 0;
-                                        cursor_location = 0;
-                                        start_index = 0;
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
-                                        break;
-                                    case ConsoleKey.C:
+                                            System.Diagnostics.Debug.WriteLine(current_input.ToString());
+
+                                            Selection_Mode = true;
+                                            File_Copy_Mode = true;
+
+                                            location_path = String.Empty;
+                                            Directories_Browser.TryPeek(out location_path);
+
+                                            if (selection_buffer != null)
+                                            {
+                                                lock (selection_buffer)
+                                                {
+                                                    selection_buffer = location_path;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                                    action.Invoke();
+
+                                    break;
+                                case ConsoleKey.R:
+
+                                    if (cki.Modifiers == (ConsoleModifiers.Control))
+                                    {
                                         lock (Error)
                                         {
                                             Error = String.Empty;
-                                            if (cki.Modifiers == (ConsoleModifiers.Control))
+
+                                            if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
                                             {
-                                                Console.Clear();
-                                                Console.CursorVisible = true;
-                                                System.Environment.Exit(0);
-                                            }
-                                            else
-                                            {
-                                                Error = String.Empty;
-
-                                                current_input.Clear();
-                                                current_input.Append(" FILE COPY ( PRESS 'Esc' TO EXIT )");
-
-                                                System.Diagnostics.Debug.WriteLine(current_input.ToString());
-
                                                 Selection_Mode = true;
-                                                File_Copy_Mode = true;
-
-                                                location_path = String.Empty;
-                                                Directories_Browser.TryPeek(out location_path);
+                                                File_Rename_Mode = true;
 
                                                 if (selection_buffer != null)
                                                 {
                                                     lock (selection_buffer)
                                                     {
-                                                        selection_buffer = location_path;
+                                                        selection_buffer = current_directory.ElementAt(current_index).Item2;
                                                     }
                                                 }
+
+                                                current_input.Clear();
+                                                current_input.Append(" FILE RENAME ( PRESS 'Esc' TO EXIT )");
+                                            }
+                                            else
+                                            {
+                                                current_input.Append(" FILE RENAME ");
+                                                Error = "[ Error: Insufficient permissions ]";
                                             }
                                         }
 
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
-                                        break;
-                                    case ConsoleKey.R:
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+                                    else
+                                    {
+                                        current_input.Clear();
+                                        current_input.Append(" REFRESH");
 
-                                        if (cki.Modifiers == (ConsoleModifiers.Control))
+                                        lock (controller_gui_operations)
+                                            controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
+                                    }
+                                    break;
+                                case ConsoleKey.L:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+
+                                        Selection_Mode = true;
+                                        Location_Selection_Mode = true;
+
+                                        location_path = String.Empty;
+                                        Directories_Browser.TryPeek(out location_path);
+
+                                        if (selection_buffer != null)
                                         {
-                                            lock (Error)
+                                            lock (selection_buffer)
+                                            {
+                                                selection_buffer = location_path;
+                                            }
+                                        }
+
+                                        current_input.Clear();
+                                        current_input.Append(" LOCATION SELECTION ( PRESS 'Esc' TO EXIT )");
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+
+                                    break;
+
+                                case ConsoleKey.D:
+                                    lock (Error)
+                                    {
+                                        if (cki.Modifiers == ConsoleModifiers.Control)
+                                        {
+                                            current_input.Clear();
+                                            current_input.Append(" FILE DELETION");
+
+                                            if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
                                             {
                                                 Error = String.Empty;
-
-                                                if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
-                                                {
-                                                    Selection_Mode = true;
-                                                    File_Rename_Mode = true;
-
-                                                    if (selection_buffer != null)
-                                                    {
-                                                        lock (selection_buffer)
-                                                        {
-                                                            selection_buffer = current_directory.ElementAt(current_index).Item2;
-                                                        }
-                                                    }
-
-                                                    current_input.Clear();
-                                                    current_input.Append(" FILE RENAME ( PRESS 'Esc' TO EXIT )");
-                                                }
-                                                else
-                                                {
-                                                    current_input.Append(" FILE RENAME ");
-                                                    Error = "[ Error: Insufficient permissions ]";
-                                                }
                                             }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                            else
+                                            {
+                                                Error = "[ Error: Insufficient permissions ]";
+                                            }
                                         }
                                         else
                                         {
-                                            current_input.Clear();
-                                            current_input.Append(" REFRESH");
+                                            Error = String.Empty;
 
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
+
+                                            Selection_Mode = true;
+                                            Directory_Creation_Mode = true;
+
+                                            if (selection_buffer != null)
+                                            {
+                                                lock (selection_buffer)
+                                                {
+                                                    selection_buffer = String.Empty;
+                                                }
+                                            }
+
+                                            current_input.Clear();
+                                            current_input.Append(" DIRECTORY CREATION ( PRESS 'Esc' TO EXIT )");
                                         }
-                                        break;
-                                    case ConsoleKey.L:
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+
+                                    break;
+
+                                case ConsoleKey.Delete:
+                                    current_input.Clear();
+                                    current_input.Append(" FILE DELETION");
+
+                                    if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
+                                    {
                                         lock (Error)
                                         {
                                             Error = String.Empty;
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Delete_File_Or_Directory);
+                                        action.Invoke();
+                                    }
+                                    else
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = "[ Error: Insufficient permissions ]";
+                                        }
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+                                    break;
+
+                                case ConsoleKey.S:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+
+                                        Selection_Mode = true;
+                                        Item_Search_Mode = true;
+
+                                        if (selection_buffer != null)
+                                        {
+                                            lock (selection_buffer)
+                                            {
+                                                selection_buffer = String.Empty;
+                                            }
+                                        }
+
+                                        current_input.Clear();
+                                        current_input.Append(" ITEM SEARCH ( 'Esc' TO EXIT )");
+                                    }
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+                                    break;
+
+                                case ConsoleKey.T:
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+
+                                        current_input.Clear();
+                                        current_input.Append(" TERMINAL");
+                                    }
+
+                                    action = async () =>
+                                    {
+                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Terminal);
+                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    };
+                                    action.Invoke();
+                                    break;
+
+                                case ConsoleKey.M:
+                                    lock (Error)
+                                    {
+                                        if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
+                                        {
+                                            Error = String.Empty;
+
 
                                             Selection_Mode = true;
-                                            Location_Selection_Mode = true;
+                                            File_Relocation_Mode = true;
 
                                             location_path = String.Empty;
                                             Directories_Browser.TryPeek(out location_path);
@@ -283,443 +485,340 @@ namespace Sharpfile
                                             }
 
                                             current_input.Clear();
-                                            current_input.Append(" LOCATION SELECTION ( PRESS 'Esc' TO EXIT )");
-                                        }
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    case ConsoleKey.D:
-                                        lock (Error)
-                                        {
-                                            if (cki.Modifiers == ConsoleModifiers.Control)
-                                            {
-                                                current_input.Clear();
-                                                current_input.Append(" FILE DELETION");
-
-                                                if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
-                                                {
-                                                    Error = String.Empty;
-                                                }
-                                                else
-                                                {
-                                                    Error = "[ Error: Insufficient permissions ]";
-                                                }
-                                            }
-                                            else
-                                            {
-                                                Error = String.Empty;
-
-
-                                                Selection_Mode = true;
-                                                Directory_Creation_Mode = true;
-
-                                                if (selection_buffer != null)
-                                                {
-                                                    lock (selection_buffer)
-                                                    {
-                                                        selection_buffer = String.Empty;
-                                                    }
-                                                }
-
-                                                current_input.Clear();
-                                                current_input.Append(" DIRECTORY CREATION ( PRESS 'Esc' TO EXIT )");
-                                            }
-                                        }
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    case ConsoleKey.Delete:
-                                        current_input.Clear();
-                                        current_input.Append(" FILE DELETION");
-
-                                        if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                            }
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Delete_File_Or_Directory);
+                                            current_input.Append(" FILE RELOCATION ( PRESS 'Esc' TO EXIT )");
                                         }
                                         else
                                         {
-                                            lock (Error)
-                                            {
-                                                Error = "[ Error: Insufficient permissions ]";
-                                            }
-                                        }
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    case ConsoleKey.S:
-                                        lock (Error)
-                                        {
-                                            Error = String.Empty;
-
-                                            Selection_Mode = true;
-                                            Item_Search_Mode = true;
-
-                                            if (selection_buffer != null)
-                                            {
-                                                lock (selection_buffer)
-                                                {
-                                                    selection_buffer = String.Empty;
-                                                }
-                                            }
-
                                             current_input.Clear();
-                                            current_input.Append(" ITEM SEARCH ( 'Esc' TO EXIT )");
+                                            current_input.Append(" FILE RELOCATION");
+                                            Error = "[ Error: Insufficient permissions ]";
                                         }
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
+                                    }
 
-                                    case ConsoleKey.T:
-                                        lock (Error)
-                                        {
-                                            Error = String.Empty;
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
 
-                                            current_input.Clear();
-                                            current_input.Append(" TERMINAL");
-                                        }
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Terminal);
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
+                                    break;
 
-                                    case ConsoleKey.M:
-                                        lock (Error)
-                                        {
-                                            if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
-                                            {
-                                                Error = String.Empty;
-
-
-                                                Selection_Mode = true;
-                                                File_Relocation_Mode = true;
-
-                                                location_path = String.Empty;
-                                                Directories_Browser.TryPeek(out location_path);
-
-                                                if (selection_buffer != null)
-                                                {
-                                                    lock (selection_buffer)
-                                                    {
-                                                        selection_buffer = location_path;
-                                                    }
-                                                }
-
-                                                current_input.Clear();
-                                                current_input.Append(" FILE RELOCATION ( PRESS 'Esc' TO EXIT )");
-                                            }
-                                            else
-                                            {
-                                                current_input.Clear();
-                                                current_input.Append(" FILE RELOCATION");
-                                                Error = "[ Error: Insufficient permissions ]";
-                                            }
-                                        }
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    default:
-                                        lock (Error)
-                                        {
-                                            Error = String.Empty;
-
-                                            current_input.Clear();
-                                            current_input.Append(String.Empty);
-                                        }
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                switch (cki.Key)
-                                {
-                                    case ConsoleKey.Escape:
-                                        current_input.Clear();
-                                        current_input.Append("");
-
-                                        Location_Selection_Mode = false;
-                                        Directory_Creation_Mode = false;
-                                        Item_Search_Mode = false;
-                                        File_Rename_Mode = false;
-                                        File_Relocation_Mode = false;
-                                        File_Copy_Mode = false;
-                                        Selection_Mode = false;
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                        break;
-
-                                    case ConsoleKey.C:
-
-                                        if (cki.Modifiers == (ConsoleModifiers.Control))
-                                        {
-                                            Console.Clear();
-                                            Console.CursorVisible = true;
-                                            System.Environment.Exit(0);
-                                        }
-                                        else
-                                        {
-                                            if (selection_buffer != null)
-                                            {
-                                                lock (selection_buffer)
-                                                {
-                                                    selection_buffer += cki.KeyChar;
-                                                }
-                                            }
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        }
-                                        break;
-
-                                    case ConsoleKey.V:
-                                        if ((cki.Modifiers.ToString() == "Shift, Control"))
-                                        {
-                                            selection_buffer += await ClipboardService.GetTextAsync();
-                                        }
-                                        else
-                                        {
-                                            if (selection_buffer != null)
-                                            {
-                                                lock (selection_buffer)
-                                                {
-                                                    selection_buffer += cki.KeyChar;
-                                                }
-                                            }
-                                        }
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    case ConsoleKey.Backspace:
-
-                                        lock (Error)
-                                        {
-                                            Error = String.Empty;
-
-                                            if (selection_buffer != null)
-                                            {
-                                                lock (selection_buffer)
-                                                {
-                                                    if (selection_buffer.Length > 0)
-                                                    {
-                                                        selection_buffer = selection_buffer.Substring(0, selection_buffer.Length - 1);
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
-
-                                    case ConsoleKey.Enter:
-
-                                        if (Location_Selection_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                            }
-
-                                            if (System.IO.Directory.Exists(selection_buffer) == true)
-                                            {
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                Location_Selection_Mode = false;
-                                                Selection_Mode = false;
-
-                                                if (selection_buffer != null)
-                                                {
-                                                    lock (selection_buffer)
-                                                    {
-                                                        Directories_Browser.Push(selection_buffer);
-                                                    }
-                                                }
-
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                            }
-                                            else
-                                            {
-                                                lock (Error)
-                                                {
-                                                    Error = "[ Error: Invalid path ]";
-                                                }
-
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                            }
-                                        }
-                                        else if (Directory_Creation_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                            }
-
-                                            location_path = String.Empty;
-                                            Directories_Browser.TryPeek(out location_path);
-
-                                            if (current_directory_permissions[1] == 'w')
-                                            {
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                Directory_Creation_Mode = false;
-                                                Selection_Mode = false;
-
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Create_Directory);
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window);
-                                            }
-                                            else
-                                            {
-                                                lock (Error)
-                                                {
-                                                    Error = "[ Error: Insufficient permissions ]";
-                                                }
-
-                                                await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                            }
-                                        }
-                                        else if (Item_Search_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                Item_Search_Mode = false;
-                                                Selection_Mode = false;
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
-                                        }
-                                        else if (File_Rename_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                File_Rename_Mode = false;
-                                                Selection_Mode = false;
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Rename_File);
-                                        }
-                                        else if (File_Relocation_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                File_Relocation_Mode = false;
-                                                Selection_Mode = false;
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
-                                        }
-                                        else if(File_Copy_Mode == true)
-                                        {
-                                            lock (Error)
-                                            {
-                                                Error = String.Empty;
-
-                                                current_input.Clear();
-                                                current_input.Append("");
-
-                                                File_Copy_Mode = false;
-                                                Selection_Mode = false;
-                                            }
-
-                                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Copy_File);
-                                        }
-                                        break;
-
-                                    default:
+                                default:
+                                    lock (Error)
+                                    {
                                         Error = String.Empty;
-                                        if(selection_buffer != null)
+
+                                        current_input.Clear();
+                                        current_input.Append(String.Empty);
+                                    }
+
+                                    lock (controller_gui_operations)
+                                        controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            switch (cki.Key)
+                            {
+                                case ConsoleKey.Escape:
+                                    current_input.Clear();
+                                    current_input.Append("");
+
+                                    Location_Selection_Mode = false;
+                                    Directory_Creation_Mode = false;
+                                    Item_Search_Mode = false;
+                                    File_Rename_Mode = false;
+                                    File_Relocation_Mode = false;
+                                    File_Copy_Mode = false;
+                                    Selection_Mode = false;
+
+                                    lock (controller_gui_operations)
+                                        controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
+                                    break;
+
+                                case ConsoleKey.C:
+
+                                    if (cki.Modifiers == (ConsoleModifiers.Control))
+                                    {
+                                        await GUI_Contents.Clear_Console();;
+                                        Console.CursorVisible = true;
+                                        System.Environment.Exit(0);
+                                    }
+                                    else
+                                    {
+                                        if (selection_buffer != null)
                                         {
                                             lock (selection_buffer)
                                             {
                                                 selection_buffer += cki.KeyChar;
                                             }
                                         }
-                                        await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        break;
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                        action.Invoke();
+                                    }
+                                    break;
 
-                                }
+                                case ConsoleKey.V:
+                                    if ((cki.Modifiers.ToString() == "Shift, Control"))
+                                    {
+                                        selection_buffer += ClipboardService.GetTextAsync();
+                                    }
+                                    else
+                                    {
+                                        if (selection_buffer != null)
+                                        {
+                                            lock (selection_buffer)
+                                            {
+                                                selection_buffer += cki.KeyChar;
+                                            }
+                                        }
+                                    }
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+                                    break;
+
+                                case ConsoleKey.Backspace:
+
+                                    lock (Error)
+                                    {
+                                        Error = String.Empty;
+
+                                        if (selection_buffer != null)
+                                        {
+                                            lock (selection_buffer)
+                                            {
+                                                if (selection_buffer.Length > 0)
+                                                {
+                                                    selection_buffer = selection_buffer.Substring(0, selection_buffer.Length - 1);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+                                    break;
+
+                                case ConsoleKey.Enter:
+
+                                    if (Location_Selection_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+                                        }
+
+                                        if (System.IO.Directory.Exists(selection_buffer) == true)
+                                        {
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            Location_Selection_Mode = false;
+                                            Selection_Mode = false;
+
+                                            if (selection_buffer != null)
+                                            {
+                                                lock (selection_buffer)
+                                                {
+                                                    Directories_Browser.Push(selection_buffer);
+                                                }
+                                            }
+
+                                            action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
+                                            action.Invoke();
+
+                                            lock (controller_gui_operations)
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
+                                        }
+                                        else
+                                        {
+                                            lock (Error)
+                                            {
+                                                Error = "[ Error: Invalid path ]";
+                                            }
+
+                                            action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                            action.Invoke();
+                                        }
+                                    }
+                                    else if (Directory_Creation_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+                                        }
+
+                                        location_path = String.Empty;
+                                        Directories_Browser.TryPeek(out location_path);
+
+                                        if (current_directory_permissions[1] == 'w')
+                                        {
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            Directory_Creation_Mode = false;
+                                            Selection_Mode = false;
+
+                                            action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Create_Directory);
+                                            action.Invoke();
+
+                                            lock (controller_gui_operations)
+                                                controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
+                                        }
+                                        else
+                                        {
+                                            lock (Error)
+                                            {
+                                                Error = "[ Error: Insufficient permissions ]";
+                                            }
+
+                                            action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                            action.Invoke();
+
+                                        }
+                                    }
+                                    else if (Item_Search_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            Item_Search_Mode = false;
+                                            Selection_Mode = false;
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
+                                        action.Invoke();
+                                    }
+                                    else if (File_Rename_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            File_Rename_Mode = false;
+                                            Selection_Mode = false;
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Rename_File);
+                                        action.Invoke();
+                                    }
+                                    else if (File_Relocation_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            File_Relocation_Mode = false;
+                                            Selection_Mode = false;
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
+                                        action.Invoke();
+                                    }
+                                    else if (File_Copy_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+
+                                            current_input.Clear();
+                                            current_input.Append("");
+
+                                            File_Copy_Mode = false;
+                                            Selection_Mode = false;
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Copy_File);
+                                        action.Invoke();
+                                    }
+                                    break;
+
+                                default:
+                                    Error = String.Empty;
+                                    if (selection_buffer != null)
+                                    {
+                                        lock (selection_buffer)
+                                        {
+                                            selection_buffer += cki.KeyChar;
+                                        }
+                                    }
+
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
+                                    action.Invoke();
+                                    break;
+
                             }
                         }
-                        Execute();
 
                         Empty_STDIN_Buffered_Stream();
                     }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e.Message);
+                    }
+
+                    enable_execute = false;
                 }
-                catch { }
-            } 
-            while (true);
+            }
         }
 
-        private static void Size_change_detection_timer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+        private static void Gui_management_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            lock (operation_started)
+            if ((DateTime.Now - last_change).TotalMilliseconds >= 100)
             {
-                async void Execute()
+                lock (controller_gui_operations)
                 {
-                    bool Empty_Buffer = true;
+                    int count = controller_gui_operations.Count;
 
-                    if (operation_started == "false")
+                    if (count > 0)
                     {
-                        if (Current_Buffer_Width != Console.BufferWidth)
+                        Func<Task>? gui_operation = controller_gui_operations.ElementAt(count - 1);
+
+                        async void Execute()
                         {
-                            Current_Buffer_Width = Console.BufferWidth;
+                            Cursor_Position_Calculator();
+                            Empty_STDIN_Buffered_Stream();
 
-                            Thread stdin_buffer_cleanup_thread = new Thread(() =>
-                            {
-                                while (Empty_Buffer == true)
-                                {
-                                    Empty_STDIN_Buffered_Stream();
-                                }
-                            });
-                            stdin_buffer_cleanup_thread.Priority = ThreadPriority.BelowNormal;
-                            stdin_buffer_cleanup_thread.Start();
-
-                            await Cursor_Position_Calculator();
-
-                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                            Empty_Buffer = false;
+                            if (gui_operation != null)
+                                await gui_operation.Invoke();
                         }
-                        else if (Current_Buffer_Height != Console.WindowHeight)
-                        {
-                            Current_Buffer_Height = Console.WindowHeight;
+                        Execute();
 
-                            Thread stdin_buffer_cleanup_thread = new Thread(() =>
-                            {
-                                while (Empty_Buffer == true)
-                                {
-                                    Empty_STDIN_Buffered_Stream();
-                                }
-                            });
-                            stdin_buffer_cleanup_thread.Priority = ThreadPriority.BelowNormal;
-                            stdin_buffer_cleanup_thread.Start();
-
-                            await Cursor_Position_Calculator();
-
-                            await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
-                            Empty_Buffer = false;
-                        }
+                        controller_gui_operations.RemoveRange(0, count);
                     }
                 }
-                Execute();
+
+                enable_execute = true;
+            }
+        }
+
+
+        private static void Size_change_detection(object? sender, System.Timers.ElapsedEventArgs e)
+        {
+            if (Current_Buffer_Width != Console.BufferWidth)
+            {
+                last_change = DateTime.Now;
+
+                Current_Buffer_Width = Console.BufferWidth;
+
+                lock (controller_gui_operations)
+                    controller_gui_operations.Add(()=> Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window));
+            }
+            else if (Current_Buffer_Height != Console.WindowHeight)
+            {
+                last_change = DateTime.Now;
+
+                Current_Buffer_Height = Console.WindowHeight;
+
+                lock (controller_gui_operations)
+                    controller_gui_operations.Add(()=> Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window));
             }
         }
 
@@ -728,7 +827,6 @@ namespace Sharpfile
             current_directory.Clear();
             Directories_Browser.Clear();
 
-            Console.Clear();
             Console.CursorVisible = true;
             System.Environment.Exit(0);
         }

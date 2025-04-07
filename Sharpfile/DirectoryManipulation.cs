@@ -12,19 +12,19 @@ namespace Sharpfile
 {
     internal class DirectoryManipulation:File_Sub_Operations
     {
-        public static async Task<bool> CopyDirectory(string source_path, string destination_path)
+        public static bool CopyDirectory(string source_path, string destination_path)
         {
             DirectoryContents source_directory_contents = new DirectoryContents();
-            await GetDirectoryContents(source_directory_contents, source_path);
+            GetDirectoryContents(source_directory_contents, source_path);
 
-            await SetDirectoryContents(source_directory_contents, destination_path);
+            SetDirectoryContents(source_directory_contents, destination_path);
 
             return true;
         }
 
         
 
-        private static async Task<bool> GetDirectoryContents(DirectoryContents contents, string current_path)
+        private static bool GetDirectoryContents(DirectoryContents contents, string current_path)
         {
             contents.DirectoryPath = current_path;
 
@@ -40,14 +40,14 @@ namespace Sharpfile
             while(directories_enumerator.MoveNext() == true)
             {
                 DirectoryContents sub_directory_contents = new DirectoryContents();
-                await GetDirectoryContents(sub_directory_contents, (string)directories_enumerator.Current);
+                GetDirectoryContents(sub_directory_contents, (string)directories_enumerator.Current);
                 contents.DirectoriesPaths.Add(sub_directory_contents);
             }
 
             return true;
         }
 
-        private static async Task<bool> SetDirectoryContents(DirectoryContents contents, string current_path)
+        private static bool SetDirectoryContents(DirectoryContents contents, string current_path)
         {
             Directory.CreateDirectory(current_path);
 
@@ -62,7 +62,7 @@ namespace Sharpfile
                 FileInfo fileInfo = new FileInfo((string)files_enumerator.Current);
 
                 path_builder.Append(current_path);
-                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
                 path_builder.Append(fileInfo.Name);
 
                 File.Copy((string)files_enumerator.Current, path_builder.ToString());
@@ -82,10 +82,10 @@ namespace Sharpfile
                 DirectoryInfo directoryInfo = new DirectoryInfo(inner_contents.DirectoryPath);
 
                 path_builder.Append(current_path);
-                path_builder.Append(await Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
+                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
                 path_builder.Append(directoryInfo.Name);
 
-                await SetDirectoryContents(inner_contents, path_builder.ToString());
+                 SetDirectoryContents(inner_contents, path_builder.ToString());
 
                 path_builder.Clear();
             }

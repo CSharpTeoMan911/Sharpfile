@@ -9,12 +9,9 @@ namespace Sharpfile
 {
     internal class Extra_Functions:Operational_State_Machine
     {
-        protected static string Null_Check(string? result)
-        {
-            return result == null ? String.Empty : result;
-        }
+        protected static string Null_Check(string? result) => result == null ? String.Empty : result;
 
-        public static Task<bool> Cursor_Position_Calculator()
+        public static bool Cursor_Position_Calculator()
         {
             if (Program.cursor_location < 0)
             {
@@ -29,22 +26,22 @@ namespace Sharpfile
                         Program.start_index = 0;
                         break;
                 }
-                return Task.FromResult(true);
+                return true;
             }
             else if (Program.cursor_location > Console.WindowHeight - 8)
             {
                 Program.cursor_location = 0;
                 Program.start_index = Program.current_index;
-                return Task.FromResult(true);
+                return true;
             }
             else
             {
-                return Task.FromResult(false);
+                return false;
             }
         }
 
 
-        public async static void Recalibrate_Indexes()
+        public static void Recalibrate_Indexes()
         {
             int found_index = Program.current_index;
 
@@ -56,11 +53,11 @@ namespace Sharpfile
             {
                 Program.current_index++;
                 Program.cursor_location++;
-                await Cursor_Position_Calculator();
+                Cursor_Position_Calculator();
             }
         }
 
-        protected static Task<bool> Load_Application_Modules()
+        protected static bool Load_Application_Modules()
         {
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
@@ -72,7 +69,7 @@ namespace Sharpfile
                 }
             }
 
-            return Task.FromResult(true);
+            return true;
         }
 
         protected static void Empty_STDIN_Buffered_Stream()

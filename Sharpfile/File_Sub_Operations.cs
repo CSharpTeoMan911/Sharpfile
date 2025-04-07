@@ -27,32 +27,32 @@ namespace Sharpfile
         //
         // [ BEGIN ]
 
-        protected static async Task<object> Sub_Operations_Controller(Sub_Operations sub_operation, string path)
+        protected static object Sub_Operations_Controller(Sub_Operations sub_operation, string path)
         {
             object result = String.Empty;
 
             switch(sub_operation)
             {
                 case Sub_Operations.Get_File_Name:
-                    result = await Get_File_Name(path);
+                    result = Get_File_Name(path);
                     break;
                 case Sub_Operations.Get_File_Extension:
-                    result = await Get_File_Extension(path);
+                    result = Get_File_Extension(path);
                     break;
                 case Sub_Operations.Get_File_Permissions:
-                    result = await Get_File_Permissions(path);
+                    result = Get_File_Permissions(path);
                     break;
                 case Sub_Operations.Get_If_File_Is_Directory:
-                    result = await Get_If_Path_Is_File_Or_Directory(path);
+                    result = Get_If_Path_Is_File_Or_Directory(path);
                     break;
                 case Sub_Operations.File_Path_Generation:
-                    result = await File_Path_Generator(path);
+                    result = File_Path_Generator(path);
                     break;
                 case Sub_Operations.Random_File_Name_Generator:
-                    result = await Random_File_Name_Generator(path);
+                    result = Random_File_Name_Generator(path);
                     break;
                 case Sub_Operations.Random_Directory_Name_Generator:
-                    result = await Random_Directory_Name_Generator(path);
+                    result = Random_Directory_Name_Generator(path);
                     break;
                 case Sub_Operations.Path_Separator_Generator:
                     result = OS_Platform_Independent_Separator();
@@ -61,13 +61,13 @@ namespace Sharpfile
             return result;
         }
 
-        protected static async Task<object> Sub_Operations_Controller(Sub_Operations sub_operation, string source_path, string item)
+        protected static object Sub_Operations_Controller(Sub_Operations sub_operation, string source_path, string item)
         {
             object result = String.Empty;
 
             if(sub_operation == Sub_Operations.Custom_File_Path_Generation)
             {
-                result = await Custom_File_Path_Generator(source_path, item);
+                result = Custom_File_Path_Generator(source_path, item);
             }
 
             return result;
@@ -78,15 +78,15 @@ namespace Sharpfile
 
 
 
-        private static Task<string> Get_File_Name(string path)
+        private static string Get_File_Name(string path)
         {
             string result = String.Empty;
             result = System.IO.Path.GetFileName(path);
-            return Task.FromResult(result);
+            return result;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-        private static Task<string> Get_File_Extension(string path)
+        private static string Get_File_Extension(string path)
         {
             string result = String.Empty;
 
@@ -118,12 +118,12 @@ namespace Sharpfile
                     }
                 }
             }
-            return Task.FromResult(result);
+            return result;
         }
 
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-        private static async Task<string> Get_File_Permissions(string path)
+        private static string Get_File_Permissions(string path)
         {
             string file_permissions = "__";
 
@@ -244,7 +244,7 @@ namespace Sharpfile
             }
             catch 
             {
-                file_permissions = await Read_File_Permissions_Using_Stream(path);
+                file_permissions =  Read_File_Permissions_Using_Stream(path);
             }
  
 
@@ -253,7 +253,7 @@ namespace Sharpfile
 
 
 
-        private static async Task<string> Read_File_Permissions_Using_Stream(string path)
+        private static string Read_File_Permissions_Using_Stream(string path)
         {
             string file_permissions = "__";
 
@@ -287,7 +287,7 @@ namespace Sharpfile
                 {
                     if (file_stream != null)
                     {
-                        await file_stream.DisposeAsync();
+                         file_stream.DisposeAsync();
                     }
                 }
             }
@@ -297,7 +297,7 @@ namespace Sharpfile
         }
 
 
-        private static Task<bool> Get_If_Path_Is_File_Or_Directory(string current_item_path)
+        private static bool Get_If_Path_Is_File_Or_Directory(string current_item_path)
         {
             bool is_directory = false;
 
@@ -323,10 +323,10 @@ namespace Sharpfile
             }
             catch { }
 
-            return Task.FromResult(is_directory);
+            return is_directory;
         }
 
-        private static Task<string> File_Path_Generator(string file)
+        private static string File_Path_Generator(string file)
         {
             string? path = String.Empty;
             Program.Directories_Browser.TryPeek(out path);
@@ -335,11 +335,11 @@ namespace Sharpfile
             formated_path.Append(OS_Platform_Independent_Separator());
             formated_path.Append(file);
 
-            return Task.FromResult(System.IO.Path.GetFullPath(formated_path.ToString()));
+            return System.IO.Path.GetFullPath(formated_path.ToString());
         }
 
 
-        private static Task<string> Custom_File_Path_Generator(string source_path, string item)
+        private static string Custom_File_Path_Generator(string source_path, string item)
         {
             StringBuilder formated_path = new StringBuilder(source_path);
 
@@ -347,10 +347,10 @@ namespace Sharpfile
 
             formated_path.Append(item);
 
-            return Task.FromResult(System.IO.Path.GetFullPath(formated_path.ToString()));
+            return System.IO.Path.GetFullPath(formated_path.ToString());
         }
 
-        private static Task<string> Random_File_Name_Generator(string? path)
+        private static string Random_File_Name_Generator(string? path)
         {
             int copy_num = 0;
 
@@ -369,10 +369,10 @@ namespace Sharpfile
                 goto Recursion;
             }
 
-            return Task.FromResult(formated_path.ToString());
+            return formated_path.ToString();
         }
 
-        private static Task<string> Random_Directory_Name_Generator(string? path)
+        private static string Random_Directory_Name_Generator(string? path)
         {
             int copy_num = 0;
 
@@ -391,7 +391,7 @@ namespace Sharpfile
                 goto Recursion;
             }
 
-            return Task.FromResult(formated_path.ToString());
+            return formated_path.ToString();
         }
 
 
