@@ -124,10 +124,7 @@ namespace Sharpfile
                 Program.current_directory.Add(current_file);
             }
 
-            if(contents_enumerator != null)
-            {
-                contents_enumerator.Dispose();
-            }
+            contents_enumerator?.Dispose();
 
             return true;
         }
@@ -155,9 +152,7 @@ namespace Sharpfile
             {
                 string? path = String.Empty;
                 Program.Directories_Browser.TryPop(out path);
-
-                Program.Directories_Browser.TryPeek(out path);
-
+                Program.Directories_Browser.TryPop(out path);
                 result = List_Files();
             }
 
@@ -281,30 +276,32 @@ namespace Sharpfile
         {
             bool result = false;
 
-            string? current_directory = String.Empty;
-            Program.Directories_Browser.TryPeek(out current_directory);
-
-            if(current_directory != null)
+            try
             {
-                StringBuilder path_builder = new StringBuilder();
-                path_builder.Append(current_directory);
-                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
-                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+                string? current_directory = String.Empty;
+                Program.Directories_Browser.TryPeek(out current_directory);
+
+                if (current_directory != null)
+                {
+                    string current_file = Program.current_directory.ElementAt(Program.current_index).Item2;
+
+                    StringBuilder path_builder = new StringBuilder();
+                    path_builder.Append(current_directory).Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty)).Append(current_file);
 
 
-                string formated_source_path = Path.GetFullPath(path_builder.ToString());
+                    string formated_source_path = Path.GetFullPath(path_builder.ToString());
 
+                    path_builder.Clear();
+                    path_builder.Append(path).Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty)).Append(current_file);
 
-                path_builder.Clear();
-                path_builder.Append(path);
-                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
-                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
-
-                string formated_destination_path = Null_Check((Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
-
-                File.Copy(formated_source_path, formated_destination_path);
-
-                path_builder.Clear();
+                    string formated_destination_path = Null_Check((Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
+                    File.Copy(formated_source_path, formated_destination_path);
+                    path_builder.Clear();
+                }
+            }
+            catch
+            {
+                
             }
 
             return result;

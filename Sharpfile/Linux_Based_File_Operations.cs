@@ -223,6 +223,7 @@ namespace Sharpfile
             {
                 string? path = String.Empty;
                 Program.Directories_Browser.TryPop(out path);
+                Program.Directories_Browser.TryPop(out path);
                 result = List_Files();
             }
 
@@ -354,18 +355,14 @@ namespace Sharpfile
             if (current_directory != null)
             {
                 StringBuilder path_builder = new StringBuilder();
-                path_builder.Append(current_directory);
-                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
-                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+                path_builder.Append(current_directory).Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty)).Append(Program.current_directory.ElementAt(Program.current_index).Item2);
 
 
                 string formated_source_path = Path.GetFullPath(path_builder.ToString());
 
 
                 path_builder.Clear();
-                path_builder.Append(path);
-                path_builder.Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty));
-                path_builder.Append(Program.current_directory.ElementAt(Program.current_index).Item2);
+                path_builder.Append(path).Append(Sub_Operations_Controller(Sub_Operations.Path_Separator_Generator, String.Empty)).Append(Program.current_directory.ElementAt(Program.current_index).Item2);
 
                 string formated_destination_path = Null_Check((Sub_Operations_Controller(Sub_Operations.Random_File_Name_Generator, path_builder.ToString()) as string));
 

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -352,24 +353,39 @@ namespace Sharpfile
 
         private static string Random_File_Name_Generator(string? path)
         {
-            int copy_num = 0;
-
-            StringBuilder formated_path = new StringBuilder();
-
-
-        Recursion:
-            formated_path.Clear();
-            formated_path.Append(path);
-            formated_path.Append("_Copy");
-            formated_path.Append(copy_num);
-
-            if (System.IO.File.Exists(formated_path.ToString()) == true)
+            if (path != null)
             {
-                copy_num++;
-                goto Recursion;
-            }
+                int copy_num = 0;
 
-            return formated_path.ToString();
+                FileInfo file = new FileInfo(path);
+
+                StringBuilder formated_path = new StringBuilder();
+
+                while (true)
+                {
+                    formated_path.Clear();
+                    formated_path.Append(file?.Directory?.FullName);
+                    formated_path.Append(OS_Platform_Independent_Separator());
+                    formated_path.Append(file?.Name);
+                    formated_path.Append(" Copy(");
+                    formated_path.Append(copy_num);
+                    formated_path.Append(")");
+                    formated_path.Append(file?.Extension);
+
+                    copy_num++;
+
+                    if ((File.Exists(formated_path.ToString()) == false))
+                        break;
+                }
+
+                Debug.WriteLine($"formated_path: {formated_path.ToString()}");
+
+                return formated_path.ToString();
+            }
+            else
+            {
+                return String.Empty;
+            }
         }
 
         private static string Random_Directory_Name_Generator(string? path)

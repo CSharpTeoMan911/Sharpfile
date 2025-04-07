@@ -29,7 +29,7 @@ namespace Sharpfile
         }
 
 
-        protected static bool Initiate_Operation(Operations operation, string operation_content)
+        protected static Task Initiate_Operation(Operations operation, string operation_content)
         {
             OS_Independent_Operations? current_operation = null;
 
@@ -88,7 +88,7 @@ namespace Sharpfile
                 }
             }
 
-            return true;
+            return Task.CompletedTask;
         }
     }
 }

@@ -87,6 +87,7 @@ namespace Sharpfile
         {
             try
             {
+
                 if (location_line.Length > Console.WindowWidth)
                 {
                     if (Console.WindowWidth >= 1 && Console.WindowHeight >= 1)

@@ -48,6 +48,7 @@ namespace Sharpfile
         public static bool File_Rename_Mode = false;
         public static bool File_Relocation_Mode = false;
         public static bool File_Copy_Mode = false;
+        public static bool Delete_Mode = false;
 
         public static string Error = String.Empty;
 
@@ -258,8 +259,6 @@ namespace Sharpfile
                                             current_input.Clear();
                                             current_input.Append(" FILE COPY ( PRESS 'Esc' TO EXIT )");
 
-                                            System.Diagnostics.Debug.WriteLine(current_input.ToString());
-
                                             Selection_Mode = true;
                                             File_Copy_Mode = true;
 
@@ -276,7 +275,7 @@ namespace Sharpfile
                                         }
                                     }
 
-                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Go_Back);
+                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window);
                                     action.Invoke();
 
                                     break;
@@ -286,6 +285,8 @@ namespace Sharpfile
                                     {
                                         lock (Error)
                                         {
+                                            Console.CursorVisible = true;
+
                                             Error = String.Empty;
 
                                             if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
@@ -362,6 +363,8 @@ namespace Sharpfile
                                             if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
                                             {
                                                 Error = String.Empty;
+                                                Selection_Mode = true;
+                                                Delete_Mode = true;
                                             }
                                             else
                                             {
@@ -403,6 +406,8 @@ namespace Sharpfile
                                         lock (Error)
                                         {
                                             Error = String.Empty;
+                                            Selection_Mode = true;
+                                            Delete_Mode = true;
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Delete_File_Or_Directory);
@@ -518,7 +523,10 @@ namespace Sharpfile
                             {
                                 case ConsoleKey.Escape:
                                     current_input.Clear();
-                                    current_input.Append("");
+                                    
+
+                                    lock (controller_gui_operations)
+                                        controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
 
                                     Location_Selection_Mode = false;
                                     Directory_Creation_Mode = false;
@@ -527,50 +535,7 @@ namespace Sharpfile
                                     File_Relocation_Mode = false;
                                     File_Copy_Mode = false;
                                     Selection_Mode = false;
-
-                                    lock (controller_gui_operations)
-                                        controller_gui_operations.Add(() => Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Redraw_Window_And_Load_Window));
-                                    break;
-
-                                case ConsoleKey.C:
-
-                                    if (cki.Modifiers == (ConsoleModifiers.Control))
-                                    {
-                                        Console.Clear();
-                                        Console.CursorVisible = true;
-                                        System.Environment.Exit(0);
-                                    }
-                                    else
-                                    {
-                                        if (selection_buffer != null)
-                                        {
-                                            lock (selection_buffer)
-                                            {
-                                                selection_buffer += cki.KeyChar;
-                                            }
-                                        }
-                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                        action.Invoke();
-                                    }
-                                    break;
-
-                                case ConsoleKey.V:
-                                    if ((cki.Modifiers.ToString() == "Shift, Control"))
-                                    {
-                                        selection_buffer += ClipboardService.GetTextAsync();
-                                    }
-                                    else
-                                    {
-                                        if (selection_buffer != null)
-                                        {
-                                            lock (selection_buffer)
-                                            {
-                                                selection_buffer += cki.KeyChar;
-                                            }
-                                        }
-                                    }
-                                    action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
-                                    action.Invoke();
+                                    Delete_Mode = true;
                                     break;
 
                                 case ConsoleKey.Backspace:
@@ -607,18 +572,9 @@ namespace Sharpfile
                                         if (System.IO.Directory.Exists(selection_buffer) == true)
                                         {
                                             current_input.Clear();
-                                            current_input.Append("");
+                                            
 
-                                            Location_Selection_Mode = false;
-                                            Selection_Mode = false;
-
-                                            if (selection_buffer != null)
-                                            {
-                                                lock (selection_buffer)
-                                                {
-                                                    Directories_Browser.Push(selection_buffer);
-                                                }
-                                            }
+                                            Directories_Browser.Push(selection_buffer);
 
                                             action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
                                             action.Invoke();
@@ -650,10 +606,7 @@ namespace Sharpfile
                                         if (current_directory_permissions[1] == 'w')
                                         {
                                             current_input.Clear();
-                                            current_input.Append("");
-
-                                            Directory_Creation_Mode = false;
-                                            Selection_Mode = false;
+                                            
 
                                             action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Create_Directory);
                                             action.Invoke();
@@ -679,10 +632,7 @@ namespace Sharpfile
                                         {
                                             Error = String.Empty;
                                             current_input.Clear();
-                                            current_input.Append("");
-
-                                            Item_Search_Mode = false;
-                                            Selection_Mode = false;
+                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
@@ -695,10 +645,7 @@ namespace Sharpfile
                                             Error = String.Empty;
 
                                             current_input.Clear();
-                                            current_input.Append("");
-
-                                            File_Rename_Mode = false;
-                                            Selection_Mode = false;
+                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Rename_File);
@@ -711,10 +658,7 @@ namespace Sharpfile
                                             Error = String.Empty;
 
                                             current_input.Clear();
-                                            current_input.Append("");
-
-                                            File_Relocation_Mode = false;
-                                            Selection_Mode = false;
+                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
@@ -725,17 +669,32 @@ namespace Sharpfile
                                         lock (Error)
                                         {
                                             Error = String.Empty;
-
-                                            current_input.Clear();
-                                            current_input.Append("");
-
-                                            File_Copy_Mode = false;
-                                            Selection_Mode = false;
+                                            current_input.Clear();  
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Copy_File);
                                         action.Invoke();
                                     }
+                                    else if (Delete_Mode == true)
+                                    {
+                                        lock (Error)
+                                        {
+                                            Error = String.Empty;
+                                            current_input.Clear();
+                                        }
+
+                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Delete_File_Or_Directory);
+                                        action.Invoke();
+                                    }
+
+                                    Location_Selection_Mode = false;
+                                    Directory_Creation_Mode = false;
+                                    Item_Search_Mode = false;
+                                    File_Rename_Mode = false;
+                                    File_Relocation_Mode = false;
+                                    File_Copy_Mode = false;
+                                    Selection_Mode = false;
+                                    Delete_Mode = true;
                                     break;
 
                                 default:
@@ -757,10 +716,7 @@ namespace Sharpfile
 
                         Empty_STDIN_Buffered_Stream();
                     }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e.Message);
-                    }
+                    catch { }
 
                     enable_execute = false;
                 }
@@ -803,6 +759,8 @@ namespace Sharpfile
             {
                 last_change = DateTime.Now;
 
+                Console.Clear();
+
                 Current_Buffer_Width = Console.BufferWidth;
 
                 lock (controller_gui_operations)
@@ -811,6 +769,8 @@ namespace Sharpfile
             else if (Current_Buffer_Height != Console.WindowHeight)
             {
                 last_change = DateTime.Now;
+
+                Console.Clear();
 
                 Current_Buffer_Height = Console.WindowHeight;
 
