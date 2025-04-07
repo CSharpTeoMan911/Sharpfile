@@ -378,7 +378,6 @@ namespace Sharpfile
                         break;
                 }
 
-                Debug.WriteLine($"formated_path: {formated_path.ToString()}");
 
                 return formated_path.ToString();
             }

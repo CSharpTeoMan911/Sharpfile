@@ -61,20 +61,19 @@ namespace Sharpfile
                 case Application_Operations.Open_Files:
                     formated_path = Null_Check(Sub_Operations_Controller(Sub_Operations.File_Path_Generation, Program.current_directory.ElementAt(Program.current_index).Item2) as string);
 
-                    if(Initiate_State(formated_path, Operation_States.File_Open_Initiated) == true)
-                        switch (Program.current_directory.ElementAt(Program.current_index).Item3 == "dir")
-                        {
-                            case true:
-                                Program.current_index = 0;
-                                Program.cursor_location = 0;
-                                await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
-                                await GUI_Contents.Redraw_Screen();
-                                break;
-                            case false:
-                                await Initiate_Operation(Operations.Open_File, formated_path);
-                                await GUI_Contents.Redraw_Screen();
-                                break;
-                        }
+                    switch (Program.current_directory.ElementAt(Program.current_index).Item3 == "dir")
+                    {
+                        case true:
+                            Program.current_index = 0;
+                            Program.cursor_location = 0;
+                            await Initiate_Operation(Operations.Navigate_To_Directory, formated_path);
+                            await GUI_Contents.Redraw_Screen();
+                            break;
+                        case false:
+                            await Initiate_Operation(Operations.Open_File, formated_path);
+                            await GUI_Contents.Redraw_Screen();
+                            break;
+                    }
                     break;
                 case Application_Operations.Navigate_To_Directory:
                     string? path = String.Empty;

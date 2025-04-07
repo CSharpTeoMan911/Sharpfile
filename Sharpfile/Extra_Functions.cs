@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sharpfile
 {
-    internal class Extra_Functions:Operational_State_Machine
+    internal class Extra_Functions
     {
         protected static string Null_Check(string? result) => result == null ? String.Empty : result;
 
