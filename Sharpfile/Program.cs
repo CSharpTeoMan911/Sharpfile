@@ -245,11 +245,9 @@ namespace Sharpfile
                                     lock (Error)
                                     {
                                         Error = String.Empty;
-                                        if (cki.Modifiers == (ConsoleModifiers.Control))
+                                        if (cki.Modifiers == ConsoleModifiers.Control)
                                         {
-                                            //action = async () => await GUI_Contents.Clear_Console();
-                                            //action.Invoke();
-
+                                            Console.Clear();
                                             Console.CursorVisible = true;
                                             System.Environment.Exit(0);
                                         }
@@ -538,7 +536,7 @@ namespace Sharpfile
 
                                     if (cki.Modifiers == (ConsoleModifiers.Control))
                                     {
-                                        await GUI_Contents.Clear_Console();;
+                                        Console.Clear();
                                         Console.CursorVisible = true;
                                         System.Environment.Exit(0);
                                     }
@@ -784,7 +782,6 @@ namespace Sharpfile
                         async void Execute()
                         {
                             Cursor_Position_Calculator();
-                            Empty_STDIN_Buffered_Stream();
 
                             if (gui_operation != null)
                                 await gui_operation.Invoke();

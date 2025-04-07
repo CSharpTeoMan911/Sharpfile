@@ -36,50 +36,11 @@ namespace Sharpfile
         }
 
 
-
-        public static Task Clear_Console()
-        {
-            try
-            {
-                String whitespace = new String(' ', Console.WindowWidth);
-
-                if (Console.WindowWidth >= 1 && Console.WindowHeight >= 1)
-                {
-                    Console.SetCursorPosition(0, 0);
-                    while (Console.CursorLeft != 0 && Console.CursorTop != 0)
-                    {
-                        // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
-                    }
-                }
-
-                for (int y = 0; y < Console.WindowWidth; y++)
-                {
-                    Console.Write(whitespace);
-                }
-
-                if (Console.WindowWidth >= 1 && Console.WindowHeight >= 1)
-                {
-                    Console.SetCursorPosition(0, 0);
-                    while (Console.CursorLeft != 0 && Console.CursorTop != 0)
-                    {
-                        // !!! WAIT FOR CURSOR TO REACH THE SPECIFIED POSITION !!!
-                    }
-                }
-            }
-            catch
-            {
-                return Task.FromResult(false);
-            }
-
-            return Task.CompletedTask;
-        }
-
-
         public static async Task Redraw_Screen()
         {
             try
             {
-                await Clear_Console();
+                Console.Clear();
 
                 int small_width = (Console.WindowWidth / 10) * 3;
                 int large_width = (Console.WindowWidth / 10) * 4;
