@@ -425,6 +425,14 @@ namespace Sharpfile
                                     action.Invoke();
                                     break;
 
+
+
+
+                                //////////////////////////////////////////
+                                //          !!!! TO DO !!!!             //
+                                //////////////////////////////////////////
+                                // Implement the file search operation  //
+                                //////////////////////////////////////////
                                 case ConsoleKey.S:
                                     lock (Error)
                                     {
