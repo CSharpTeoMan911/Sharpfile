@@ -153,6 +153,23 @@ namespace Sharpfile
                 string? path = String.Empty;
                 Program.Directories_Browser.TryPop(out path);
                 Program.Directories_Browser.TryPop(out path);
+
+                if (path != null) 
+                {
+                    string? prev = null;
+                    Program.Directories_Browser.TryPeek(out prev);
+
+                    if (prev != null)
+                    {
+                        if (prev != path)
+                            Program.Directories_Browser.Push(path);
+                    }
+                    else
+                    {
+                        Program.Directories_Browser.Push(path);
+                    }
+                }
+
                 result = List_Files();
             }
 
