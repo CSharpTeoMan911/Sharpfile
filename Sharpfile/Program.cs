@@ -640,7 +640,6 @@ namespace Sharpfile
                                         {
                                             Error = String.Empty;
                                             current_input.Clear();
-                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Item_Search);
@@ -651,9 +650,7 @@ namespace Sharpfile
                                         lock (Error)
                                         {
                                             Error = String.Empty;
-
                                             current_input.Clear();
-                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Rename_File);
@@ -664,9 +661,7 @@ namespace Sharpfile
                                         lock (Error)
                                         {
                                             Error = String.Empty;
-
                                             current_input.Clear();
-                                            
                                         }
 
                                         action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Move_File);
