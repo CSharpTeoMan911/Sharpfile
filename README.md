@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/41025ea4-d790-4c50-877f-1a0610318dec"/>
+  <img src="https://github.com/user-attachments/assets/1c736c52-5c2d-4285-b364-5bc79d5f68e3"/>
 </div>
 
 
@@ -10,7 +10,7 @@
 This project was designed with performance, portability, and minimalism in mind.
 
 <div align="left">
-  <img src="https://github.com/user-attachments/assets/42216fbc-6582-4d01-949f-7bb125931862"/>
+  <img src="https://github.com/user-attachments/assets/cd22f527-9079-49f1-b3a1-d6c62858b501"/>
   
   <div align="left">
     <img src="https://github.com/user-attachments/assets/1422d334-15ac-4f9c-92df-047a40dbfb52"/>
@@ -22,7 +22,7 @@ This project was designed with performance, portability, and minimalism in mind.
 <br/>
 
 <div align="left">
-  <img src="https://github.com/user-attachments/assets/82678677-f3dd-4a06-ab1f-c0e83ba372f0"/>
+  <img src="https://github.com/user-attachments/assets/9e76fda4-8c2a-44af-b5fb-d44405644c39"/>
 
   <div align="left">
     <img src="https://github.com/user-attachments/assets/ed39d0b5-25ad-42de-8c9a-f87b4771c89b"/>
