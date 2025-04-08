@@ -403,22 +403,13 @@ namespace Sharpfile
 
                                     if (current_directory.ElementAt(current_index).Item1[0] == 'r' && current_directory.ElementAt(current_index).Item1[1] == 'w')
                                     {
-                                        lock (Error)
-                                        {
-                                            Error = String.Empty;
-                                            Selection_Mode = true;
-                                            Delete_Mode = true;
-                                        }
-
-                                        action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Delete_File_Or_Directory);
-                                        action.Invoke();
+                                        Error = String.Empty;
+                                        Selection_Mode = true;
+                                        Delete_Mode = true;
                                     }
                                     else
                                     {
-                                        lock (Error)
-                                        {
-                                            Error = "[ Error: Insufficient permissions ]";
-                                        }
+                                        Error = "[ Error: Insufficient permissions ]";
                                     }
 
                                     action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Change_Location);
