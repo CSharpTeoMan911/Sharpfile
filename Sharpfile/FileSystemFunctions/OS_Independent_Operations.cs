@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Sharpfile
+﻿namespace Sharpfile.FileSystemFunctions
 {
     internal class OS_Independent_Operations: File_System_Operations
     {

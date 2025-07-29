@@ -1,14 +1,14 @@
-﻿using System.Diagnostics;
-using System.IO;
+﻿using Sharpfile.Shared;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 
 
-namespace Sharpfile
+namespace Sharpfile.FileSystemFunctions
 {
     internal class File_Sub_Operations:Extra_Functions
     {
+#pragma warning disable CA1416 // Validate platform compatibility
         public enum Sub_Operations
         {
             Get_File_Name,
@@ -30,7 +30,7 @@ namespace Sharpfile
 
         protected static object Sub_Operations_Controller(Sub_Operations sub_operation, string path)
         {
-            object result = String.Empty;
+            object result = string.Empty;
 
             switch(sub_operation)
             {
@@ -64,7 +64,7 @@ namespace Sharpfile
 
         protected static object Sub_Operations_Controller(Sub_Operations sub_operation, string source_path, string item)
         {
-            object result = String.Empty;
+            object result = string.Empty;
 
             if(sub_operation == Sub_Operations.Custom_File_Path_Generation)
             {
@@ -81,15 +81,14 @@ namespace Sharpfile
 
         private static string Get_File_Name(string path)
         {
-            string result = String.Empty;
-            result = System.IO.Path.GetFileName(path);
+            string result = string.Empty;
+            result = Path.GetFileName(path);
             return result;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         private static string Get_File_Extension(string path)
         {
-            string result = String.Empty;
+            string result = string.Empty;
 
             if(Directory.Exists(path) == true)
             {
@@ -97,23 +96,23 @@ namespace Sharpfile
             }
             else if(File.Exists(path) == true)
             {
-                result = System.IO.Path.GetExtension(path);
+                result = Path.GetExtension(path);
 
-                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
+                if (current_os == System.Runtime.InteropServices.OSPlatform.Linux)
                 {
-                    if(result == String.Empty)
+                    if(result == string.Empty)
                     {
-                        string file_mode = System.IO.File.GetUnixFileMode(path).ToString();
+                        string file_mode = File.GetUnixFileMode(path).ToString();
 
-                        if ((file_mode.Contains("UserExecute") == true))
+                        if (file_mode.Contains("UserExecute") == true)
                         {
                             result = "bin";
                         }
                     }
                 }
-                else if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
+                else if(current_os == System.Runtime.InteropServices.OSPlatform.Windows)
                 {
-                    if (result == String.Empty || result == ".exe")
+                    if (result == string.Empty || result == ".exe")
                     {
                         result = "bin";
                     }
@@ -122,33 +121,31 @@ namespace Sharpfile
             return result;
         }
 
-
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         private static string Get_File_Permissions(string path)
         {
             string file_permissions = "__";
 
             try
             {
-                if (System.IO.Path.Exists(path))
+                if (Path.Exists(path))
                 {
-                    if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
+                    if (current_os == System.Runtime.InteropServices.OSPlatform.Linux)
                     {
-                        string file_mode = System.IO.File.GetUnixFileMode(path).ToString();
+                        string file_mode = File.GetUnixFileMode(path).ToString();
 
-                        if((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserWrite") == true) && (file_mode.Contains("UserExecute") == true))
+                        if(file_mode.Contains("UserRead") == true && file_mode.Contains("UserWrite") == true && file_mode.Contains("UserExecute") == true)
                         {
                             file_permissions = "rwx";
                         }
-                        else if((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserWrite") == true))
+                        else if(file_mode.Contains("UserRead") == true && file_mode.Contains("UserWrite") == true)
                         {
                             file_permissions = "rw_";
                         }
-                        else if ((file_mode.Contains("UserRead") == true) && (file_mode.Contains("UserExecute") == true))
+                        else if (file_mode.Contains("UserRead") == true && file_mode.Contains("UserExecute") == true)
                         {
                             file_permissions = "r_x";
                         }
-                        else if ((file_mode.Contains("UserWrite") == true) && (file_mode.Contains("UserExecute") == true))
+                        else if (file_mode.Contains("UserWrite") == true && file_mode.Contains("UserExecute") == true)
                         {
                             file_permissions = "_wx";
                         }
@@ -169,18 +166,18 @@ namespace Sharpfile
                             file_permissions = "___";
                         }
                     }
-                    else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
+                    else if (current_os == System.Runtime.InteropServices.OSPlatform.Windows)
                     {
                         
-                        if (System.IO.Directory.Exists(path) == true)
+                        if (Directory.Exists(path) == true)
                         {
-                            System.Security.AccessControl.DirectorySecurity directory_security = new DirectoryInfo(path).GetAccessControl();
+                            DirectorySecurity directory_security = new DirectoryInfo(path).GetAccessControl();
 
                             AuthorizationRuleCollection rules = directory_security.GetAccessRules(true, true, typeof(NTAccount));
 
                             foreach (AuthorizationRule rule in rules)
                             {
-                                if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
+                                if (rule.IdentityReference.Value.Equals(WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
                                 {
                                     var filesystemAccessRule = (FileSystemAccessRule)rule;
 
@@ -203,15 +200,15 @@ namespace Sharpfile
                                 }
                             }
                         }
-                        else if (System.IO.File.Exists(path) == true)
+                        else if (File.Exists(path) == true)
                         {
-                            System.Security.AccessControl.FileSecurity file_security = new FileInfo(path).GetAccessControl(AccessControlSections.All);
+                            FileSecurity file_security = new FileInfo(path).GetAccessControl(AccessControlSections.All);
 
                             AuthorizationRuleCollection rules = file_security.GetAccessRules(true, true, typeof(NTAccount));
 
                             foreach (AuthorizationRule rule in rules)
                             {
-                                if (rule.IdentityReference.Value.Equals(System.Security.Principal.WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
+                                if (rule.IdentityReference.Value.Equals(WindowsIdentity.GetCurrent().Name, StringComparison.CurrentCultureIgnoreCase))
                                 {
                                     var filesystemAccessRule = (FileSystemAccessRule)rule;
 
@@ -260,7 +257,7 @@ namespace Sharpfile
 
             try
             {
-                System.IO.FileStream file_stream = System.IO.File.Open(path, System.IO.FileMode.Open);
+                FileStream file_stream = File.Open(path, FileMode.Open);
                 try
                 {
                     if (file_stream.CanRead == true && file_stream.CanWrite == true)
@@ -329,14 +326,14 @@ namespace Sharpfile
 
         private static string File_Path_Generator(string file)
         {
-            string? path = String.Empty;
-            Program.Directories_Browser.TryPeek(out path);
+            string? path = string.Empty;
+            Directories_Browser.TryPeek(out path);
 
             StringBuilder formated_path = new StringBuilder(Null_Check(path));
             formated_path.Append(OS_Platform_Independent_Separator());
             formated_path.Append(file);
 
-            return System.IO.Path.GetFullPath(formated_path.ToString());
+            return Path.GetFullPath(formated_path.ToString());
         }
 
 
@@ -348,7 +345,7 @@ namespace Sharpfile
 
             formated_path.Append(item);
 
-            return System.IO.Path.GetFullPath(formated_path.ToString());
+            return Path.GetFullPath(formated_path.ToString());
         }
 
         private static string Random_File_Name_Generator(string? path)
@@ -374,7 +371,7 @@ namespace Sharpfile
 
                     copy_num++;
 
-                    if ((File.Exists(formated_path.ToString()) == false))
+                    if (File.Exists(formated_path.ToString()) == false)
                         break;
                 }
 
@@ -383,7 +380,7 @@ namespace Sharpfile
             }
             else
             {
-                return String.Empty;
+                return string.Empty;
             }
         }
 
@@ -391,19 +388,17 @@ namespace Sharpfile
         {
             int copy_num = 0;
 
-            StringBuilder formated_path = new StringBuilder();
+            StringBuilder formated_path = new StringBuilder(path);
 
-
-        Recursion:
-            formated_path.Clear();
-            formated_path.Append(path);
-            formated_path.Append("_Copy");
-            formated_path.Append(copy_num);
-
-            if (System.IO.Directory.Exists(formated_path.ToString()) == true)
+            while (Directory.Exists(formated_path.ToString()) == true)
             {
+                formated_path.Clear();
+                formated_path.Append(path);
+                formated_path.Append(" Copy");
+                formated_path.Append('(');
+                formated_path.Append(copy_num);
+                formated_path.Append(')');
                 copy_num++;
-                goto Recursion;
             }
 
             return formated_path.ToString();
@@ -412,7 +407,7 @@ namespace Sharpfile
 
         private static string OS_Platform_Independent_Separator()
         {
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            if (current_os == System.Runtime.InteropServices.OSPlatform.Windows)
             {
                 return "\\";
             }

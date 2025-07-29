@@ -1,60 +1,15 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using TextCopy;
+﻿global using static Sharpfile.Shared.Variables;
+using Sharpfile.Controllers;
+using Sharpfile.Shared;
 
 namespace Sharpfile
 {
     class Program:Extra_Functions
     {
-        private static DateTime last_change = DateTime.Now;
-
-
-        private static bool enable_execute = false;
-
-        public static List<Func<Task>> controller_gui_operations = new List<Func<Task>>();
-        public static ConcurrentQueue<Task> controller_operations = new ConcurrentQueue<Task>();
-
-
-        public static ConcurrentBag<Tuple<string, string, string, ConsoleColor>> current_directory = new ConcurrentBag<Tuple<string, string, string, ConsoleColor>>();
-        public static string current_directory_permissions = "__";
-
-
-        public static int current_index = 0;
-        public static int cursor_location = 0;
-        public static int start_index = 0;
-
-
-        public static ConsoleColor Default_Console_Color = Console.ForegroundColor;
-        public static ConsoleColor Default_Console_Background_Color = Console.BackgroundColor;
-
-        public static ConcurrentStack<string> Directories_Browser = new ConcurrentStack<string>();
-
-        public static int Current_Buffer_Width = 0;
-        public static int Current_Buffer_Height = 0;
-
-        public static StringBuilder current_input = new StringBuilder();
-        public static string? selection_buffer = String.Empty;
-
-        public static bool Selection_Mode = false;
-
-        public static bool Location_Selection_Mode = false;
-        public static bool Directory_Creation_Mode = false;
-        public static bool Item_Search_Mode = false;
-        public static bool File_Rename_Mode = false;
-        public static bool File_Relocation_Mode = false;
-        public static bool File_Copy_Mode = false;
-        public static bool Delete_Mode = false;
-
-        public static string Error = String.Empty;
-
-
         public static void Main()
         {
+            current_os = GetCurrentOs();
+
             Load_Application_Modules();
 
             Directories_Browser.Push(Directory.GetCurrentDirectory());
@@ -416,6 +371,10 @@ namespace Sharpfile
                                     action.Invoke();
                                     break;
 
+                                case ConsoleKey.P:
+
+                                    break;
+
 
 
 
@@ -571,10 +530,6 @@ namespace Sharpfile
                                         if (System.IO.Directory.Exists(selection_buffer) == true)
                                         {
                                             current_input.Clear();
-                                            
-
-                                            Directories_Browser.Push(selection_buffer);
-
                                             action = async () => await Application_Operational_Controller.Controller(Application_Operational_Controller.Application_Operations.Navigate_To_Directory);
                                             action.Invoke();
 
@@ -719,7 +674,7 @@ namespace Sharpfile
 
         private static void Gui_management_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            if ((DateTime.Now - last_change).TotalMilliseconds >= 100)
+            if ((DateTime.UtcNow - last_change).TotalMilliseconds >= 100)
             {
                 lock (controller_gui_operations)
                 {
@@ -751,7 +706,7 @@ namespace Sharpfile
         {
             if (Current_Buffer_Width != Console.BufferWidth)
             {
-                last_change = DateTime.Now;
+                last_change = DateTime.UtcNow;
 
                 Console.Clear();
 
@@ -762,7 +717,7 @@ namespace Sharpfile
             }
             else if (Current_Buffer_Height != Console.WindowHeight)
             {
-                last_change = DateTime.Now;
+                last_change = DateTime.UtcNow;
 
                 Console.Clear();
 

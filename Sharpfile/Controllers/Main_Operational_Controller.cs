@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Sharpfile.FileSystemFunctions;
 using System.Collections.Concurrent;
 
-namespace Sharpfile
+namespace Sharpfile.Controllers
 {
     internal class Main_Operational_Controller:File_Sub_Operations
     {
@@ -33,11 +29,11 @@ namespace Sharpfile
         {
             OS_Independent_Operations? current_operation = null;
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux) == true)
+            if (current_os == System.Runtime.InteropServices.OSPlatform.Linux)
             {
                 current_operation = new OS_Independent_Operations(new Linux_Based_File_Operations());
             }
-            else if(System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) == true)
+            else if(current_os == System.Runtime.InteropServices.OSPlatform.Windows)
             {
                 current_operation = new OS_Independent_Operations(new Windows_Based_File_Operations());
             }
